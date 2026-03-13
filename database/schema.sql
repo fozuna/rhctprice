@@ -1,0 +1,76 @@
+-- Schema CT Price - Gestão de Currículos
+
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  senha_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin','rh','viewer') NOT NULL DEFAULT 'viewer',
+  is_supervisor TINYINT(1) NOT NULL DEFAULT 0,
+  email_verified_at DATETIME DEFAULT NULL,
+  last_password_reset_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS vagas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
+  descricao TEXT NOT NULL,
+  requisitos TEXT NOT NULL,
+  area VARCHAR(100) DEFAULT NULL,
+  local VARCHAR(100) DEFAULT NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS candidaturas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  vaga_id INT NOT NULL,
+  nome VARCHAR(120) NOT NULL,
+  email VARCHAR(120) NOT NULL,
+  telefone VARCHAR(40) NOT NULL,
+  cpf VARCHAR(11) NOT NULL UNIQUE,
+  cargo_pretendido VARCHAR(120) NOT NULL,
+  experiencia TEXT NOT NULL,
+  pdf_path VARCHAR(255) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'novo',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cand_vaga FOREIGN KEY (vaga_id) REFERENCES vagas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS candidatura_historico (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  candidatura_id INT NOT NULL,
+  status_anterior VARCHAR(30) DEFAULT NULL,
+  status_novo VARCHAR(30) NOT NULL,
+  observacoes TEXT DEFAULT NULL,
+  usuario_id INT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_hist_candidatura FOREIGN KEY (candidatura_id) REFERENCES candidaturas(id) ON DELETE CASCADE,
+  CONSTRAINT fk_hist_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_password_reset_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auditoria_usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  actor_usuario_id INT DEFAULT NULL,
+  target_usuario_id INT DEFAULT NULL,
+  action VARCHAR(80) NOT NULL,
+  details TEXT DEFAULT NULL,
+  ip VARCHAR(45) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_auditoria_actor FOREIGN KEY (actor_usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  CONSTRAINT fk_auditoria_target FOREIGN KEY (target_usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Usuário admin padrão (ajuste e remova em produção)
+-- UPDATE este bloco após criação para definir senha com bcrypt em PHP.

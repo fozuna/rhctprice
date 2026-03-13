@@ -1,0 +1,17 @@
+node_modules/
+vendor/
+.env
+.env.*
+storage/sessions/
+storage/ratelimit/
+storage/resumes/
+storage/audit/
+public/uploads/
+test-results/
+playwright-report/
+*.log
+*.tmp
+*.cache
+Thumbs.db
+.DS_Store
+
