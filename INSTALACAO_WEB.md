@@ -43,3 +43,11 @@ Este projeto possui instalador via navegador em `https://seu-dominio/install.php
 
 - Log da aplicação: `storage/logs/app-error.log`
 - Logs do instalador: `storage/logs/install-AAAAMMDD-HHMMSS.log`
+- Log estruturado diário (JSONL): `storage/logs/app-AAAA-MM-DD.jsonl`
+- Visualizador web: `https://seu-dominio/logs.php?key=SUA_CHAVE`
+
+## Configuração de observabilidade
+
+- `LOG_LEVEL` define nível mínimo (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).
+- `LOG_ALERT_EMAIL` recebe alertas por e-mail para erros `ERROR` e `CRITICAL`.
+- `LOG_VIEWER_KEY` protege o acesso ao visualizador `logs.php`.

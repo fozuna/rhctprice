@@ -1,11 +1,16 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\Autoload;
+use App\Core\Config;
+use App\Core\Logger;
 use App\Core\Installer;
 
-require __DIR__ . '/../app/core/Autoload.php';
-Autoload::register();
+require __DIR__ . '/../app/core/bootstrap.php';
+$app = Config::app();
+
+if (($app['env'] ?? 'prod') === 'dev' && isset($_GET['__force500'])) {
+    throw new RuntimeException('Falha forçada para teste de logging 500');
+}
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -32,18 +37,21 @@ $selfDeleted = false;
 if (Installer::isInstalled()) {
     http_response_code(403);
     $messages[] = 'Instalador bloqueado: a aplicação já está instalada.';
+    Logger::warning('Installer blocked: already installed', Logger::captureContext(403));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Installer::isInstalled()) {
     $postedToken = (string)($_POST['csrf'] ?? '');
     if (!hash_equals($token, $postedToken)) {
         $messages[] = 'Token de segurança inválido.';
+        Logger::warning('Installer invalid CSRF token', Logger::captureContext(400));
     } else {
         $requiredKey = getenv('INSTALLER_KEY');
         if (is_string($requiredKey) && trim($requiredKey) !== '') {
             $postedKey = (string)($_POST['installer_key'] ?? '');
             if (!hash_equals(trim($requiredKey), trim($postedKey))) {
                 $messages[] = 'Chave do instalador inválida.';
+                Logger::warning('Installer invalid key', Logger::captureContext(403));
             }
         }
     }
@@ -68,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Installer::isInstalled()) {
             $selfDeleted = (bool)($result['self_delete'] ?? false);
         } catch (Throwable $e) {
             $messages[] = 'Erro na instalação: ' . $e->getMessage();
+            Logger::exception($e, 'CRITICAL', Logger::captureContext(500, ['installer' => ['phase' => 'run']]));
         }
     }
 }
@@ -161,4 +170,3 @@ $isLocked = Installer::isInstalled();
   </div>
 </body>
 </html>
-

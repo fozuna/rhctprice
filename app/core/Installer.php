@@ -27,6 +27,7 @@ class Installer
 
     public static function run(array $input, callable $logger): array
     {
+        Logger::init(Config::app());
         self::ensureDir(self::storagePath() . '/logs');
         $installLog = self::storagePath() . '/logs/install-' . date('Ymd-His') . '.log';
         $log = function (string $message) use ($logger, $installLog): void {
@@ -36,6 +37,7 @@ class Installer
         };
 
         $log('Iniciando processo de instalação.');
+        Logger::info('Installer started', Logger::captureContext(http_response_code(), ['installer' => ['step' => 'start']]));
         if (self::isInstalled()) {
             throw new RuntimeException('Instalação já foi concluída anteriormente.');
         }
@@ -61,6 +63,7 @@ class Installer
 
         self::writeInstallLock($log);
         $log('Instalação concluída com sucesso.');
+        Logger::info('Installer finished', Logger::captureContext(http_response_code(), ['installer' => ['step' => 'done']]));
 
         return [
             'log_file' => $installLog,
@@ -249,4 +252,3 @@ class Installer
         return self::storagePath() . '/install.done';
     }
 }
-

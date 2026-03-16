@@ -2,6 +2,7 @@
 use App\Core\Autoload;
 use App\Core\Security;
 use App\Core\Config;
+use App\Core\Logger;
 
 require __DIR__ . '/Autoload.php';
 Autoload::register();
@@ -23,6 +24,7 @@ if (is_file($errorLogFile) || is_dir($logsDir)) {
     @ini_set('log_errors', '1');
     @ini_set('error_log', $errorLogFile);
 }
+Logger::init($app);
 
 // Segurança de sessão
 Security::startSecureSession($app['security']['session_name']);
@@ -39,13 +41,46 @@ if ($app['env'] === 'dev') {
 }
 
 set_exception_handler(function (\Throwable $e) use ($app): void {
-    error_log('[UNCAUGHT] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     http_response_code(500);
-    if (($app['env'] ?? 'prod') === 'dev') {
-        echo '<h1>Erro interno</h1><pre>' . htmlspecialchars((string)$e) . '</pre>';
+    Logger::exception($e, 'CRITICAL', Logger::captureContext(500));
+    error_log('[UNCAUGHT] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) {
+        header('Content-Type: text/plain; charset=UTF-8');
+    }
+    if (($app['env'] ?? 'prod') !== 'dev') {
+        $ref = substr(hash('sha256', $e->getMessage() . '|' . $e->getFile() . '|' . $e->getLine()), 0, 12);
+        echo 'Erro interno do servidor. Referência: ' . $ref;
         return;
     }
     echo 'Erro interno do servidor.';
+    echo "\n\n";
+    echo (string)$e;
+});
+
+set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
+    $level = 'WARNING';
+    if (in_array($severity, [E_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR], true)) {
+        $level = 'ERROR';
+    } elseif (in_array($severity, [E_NOTICE, E_USER_NOTICE, E_DEPRECATED, E_USER_DEPRECATED], true)) {
+        $level = 'INFO';
+    }
+    Logger::log($level, $message, Logger::captureContext(http_response_code(), [
+        'php_error' => ['severity' => $severity, 'file' => $file, 'line' => $line],
+    ]));
+    return false;
+});
+
+register_shutdown_function(function (): void {
+    $last = error_get_last();
+    if (!is_array($last)) {
+        return;
+    }
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+    if (!in_array((int)$last['type'], $fatalTypes, true)) {
+        return;
+    }
+    http_response_code(500);
+    Logger::critical('Fatal shutdown error', Logger::captureContext(500, ['fatal' => $last]));
 });
 
 // Garantir diretório de currículos

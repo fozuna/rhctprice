@@ -8,6 +8,7 @@ storage/sessions/
 storage/ratelimit/
 storage/resumes/
 storage/audit/
+storage/logs/
 public/uploads/
 test-results/
 playwright-report/

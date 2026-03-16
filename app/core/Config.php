@@ -34,6 +34,11 @@ class Config
                 'subject_password_changed' => 'Senha redefinida',
                 'subject_supervisor_created' => 'Usuário Supervisor criado',
             ],
+            'logging' => [
+                'level' => 'INFO',
+                'alert_email' => '',
+                'viewer_key' => '',
+            ],
             'database' => [
                 'dsn' => 'mysql:host=127.0.0.1;dbname=ctprice;charset=utf8mb4',
                 'user' => 'root',
@@ -136,6 +141,19 @@ class Config
         $mailToHr = getenv('MAIL_TO_HR');
         if (is_string($mailToHr) && trim($mailToHr) !== '') {
             $config['mail']['to_hr'] = trim($mailToHr);
+        }
+
+        $logLevel = getenv('LOG_LEVEL');
+        if (is_string($logLevel) && trim($logLevel) !== '') {
+            $config['logging']['level'] = strtoupper(trim($logLevel));
+        }
+        $logAlert = getenv('LOG_ALERT_EMAIL');
+        if (is_string($logAlert) && trim($logAlert) !== '') {
+            $config['logging']['alert_email'] = trim($logAlert);
+        }
+        $viewerKey = getenv('LOG_VIEWER_KEY');
+        if (is_string($viewerKey) && trim($viewerKey) !== '') {
+            $config['logging']['viewer_key'] = trim($viewerKey);
         }
 
         $supEmail = getenv('SUPERVISOR_EMAIL');

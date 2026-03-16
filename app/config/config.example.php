@@ -10,10 +10,14 @@ return [
         'from' => 'no-reply@seu-dominio.com.br',
         'to_hr' => 'rh@seu-dominio.com.br',
     ],
+    'logging' => [
+        'level' => 'INFO',
+        'alert_email' => 'devops@seu-dominio.com.br',
+        'viewer_key' => 'defina-uma-chave-forte-aqui',
+    ],
     'database' => [
         'dsn' => 'mysql:host=localhost;dbname=seu_banco;charset=utf8mb4',
         'user' => 'seu_usuario',
         'pass' => 'sua_senha',
     ],
 ];
-
