@@ -97,7 +97,8 @@ class Config
             return self::$cachedVersion;
         }
         if (function_exists('shell_exec')) {
-            $raw = @shell_exec('git rev-parse --short HEAD 2>/dev/null');
+            $nullDevice = strtoupper((string)PHP_OS_FAMILY) === 'WINDOWS' ? 'NUL' : '/dev/null';
+            $raw = @shell_exec('git rev-parse --short HEAD 2>' . $nullDevice);
             $hash = trim((string)$raw);
             if ($hash !== '') {
                 self::$cachedVersion = $hash;

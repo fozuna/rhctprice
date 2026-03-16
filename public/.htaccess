@@ -10,8 +10,9 @@ Options -Indexes
 
   # Bloqueio de extensões sensíveis
   RewriteRule ^.*\.(env|ini|log|bak|sql|sh|cmd|bat)$ - [F,L]
-  # Impede acesso direto a outros .php (não index.php)
+  # Impede acesso direto a outros .php (não index.php e install.php)
   RewriteCond %{REQUEST_URI} !/index\.php$
+  RewriteCond %{REQUEST_URI} !/install\.php$
   RewriteRule ^.*\.php$ - [F,L]
 </IfModule>
 

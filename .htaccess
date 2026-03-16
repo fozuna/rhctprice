@@ -3,3 +3,12 @@ Options -Indexes
 
 # Garante que index.php seja o arquivo padrão
 DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^$ public/ [L]
+  RewriteCond %{REQUEST_URI} !^/public/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
