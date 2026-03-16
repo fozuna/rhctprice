@@ -6,7 +6,9 @@
   "scripts": {
     "dev:css": "tailwindcss -i ./assets/tailwind-input.css -o ./public/assets/tailwind.css --watch",
     "build:css": "tailwindcss -i ./assets/tailwind-input.css -o ./public/assets/tailwind.css --minify",
+    "test:unit": "node tests/unit/share-utils.test.js",
     "test:visual": "playwright test",
+    "test:integration:share": "playwright test tests/share-menu.spec.js",
     "test:visual:update": "playwright test --update-snapshots"
   },
   "keywords": [],

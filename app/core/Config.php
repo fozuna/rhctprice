@@ -18,7 +18,7 @@ class Config
             'security' => [
                 'csrf_key' => 'ctprice_csrf_token',
                 'session_name' => 'CTPRICESESSID',
-                'supervisor_email' => 'admin@traxter.com.,br',
+                'supervisor_email' => 'admin@traxter.com.br',
                 'supervisor_password' => 'xsW8c#nM?TdvmpxgX&u5',
                 'allowed_upload_mime' => ['application/pdf'],
                 'max_upload_bytes' => 5 * 1024 * 1024, // 5MB
@@ -80,11 +80,18 @@ class Config
         if (self::$cachedVersion !== null) {
             return self::$cachedVersion;
         }
-        $raw = @shell_exec('git rev-parse --short HEAD 2>NUL');
-        $hash = trim((string)$raw);
-        if ($hash !== '') {
-            self::$cachedVersion = $hash;
+        $envVersion = getenv('APP_VERSION');
+        if (is_string($envVersion) && trim($envVersion) !== '') {
+            self::$cachedVersion = trim($envVersion);
             return self::$cachedVersion;
+        }
+        if (function_exists('shell_exec')) {
+            $raw = @shell_exec('git rev-parse --short HEAD 2>/dev/null');
+            $hash = trim((string)$raw);
+            if ($hash !== '') {
+                self::$cachedVersion = $hash;
+                return self::$cachedVersion;
+            }
         }
         self::$cachedVersion = 'dev';
         return self::$cachedVersion;
