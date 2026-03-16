@@ -1,6 +1,3 @@
-# Desativa listagem de diretórios em public
-Options -Indexes
-
 <IfModule mod_rewrite.c>
   RewriteEngine On
   # Roteamento para front controller

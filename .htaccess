@@ -1,6 +1,3 @@
-# Desativa listagem de diretórios na raiz
-Options -Indexes
-
 # Garante que index.php seja o arquivo padrão
 DirectoryIndex index.php
 
