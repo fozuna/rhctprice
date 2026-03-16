@@ -9,7 +9,7 @@ class Config
     public static function app(): array
     {
         $baseUrl = self::baseUrl();
-        return [
+        $config = [
             'name' => 'CT Price - Gestão de Currículos',
             'product_name' => 'TRAXTER RH',
             'version' => self::version(),
@@ -19,11 +19,11 @@ class Config
                 'csrf_key' => 'ctprice_csrf_token',
                 'session_name' => 'CTPRICESESSID',
                 'supervisor_email' => 'admin@traxter.com.br',
-                'supervisor_password' => 'xsW8c#nM?TdvmpxgX&u5',
+                'supervisor_password' => '',
                 'allowed_upload_mime' => ['application/pdf'],
-                'max_upload_bytes' => 5 * 1024 * 1024, // 5MB
+                'max_upload_bytes' => 5 * 1024 * 1024,
                 'allowed_image_mime' => ['image/png','image/jpeg','image/webp'],
-                'max_image_bytes' => 2 * 1024 * 1024, // 2MB
+                'max_image_bytes' => 2 * 1024 * 1024,
             ],
             'mail' => [
                 'enabled' => true,
@@ -46,6 +46,17 @@ class Config
                 ],
             ],
         ];
+
+        $localPath = dirname(__DIR__) . '/config/local.php';
+        if (is_file($localPath)) {
+            $local = require $localPath;
+            if (is_array($local)) {
+                $config = self::mergeRecursive($config, $local);
+            }
+        }
+
+        $config = self::applyEnvOverrides($config);
+        return $config;
     }
 
     public static function baseUrl(): string
@@ -95,5 +106,58 @@ class Config
         }
         self::$cachedVersion = 'dev';
         return self::$cachedVersion;
+    }
+
+    private static function applyEnvOverrides(array $config): array
+    {
+        $env = getenv('APP_ENV');
+        if (is_string($env) && trim($env) !== '') {
+            $config['env'] = trim($env);
+        }
+
+        $dbDsn = getenv('DB_DSN');
+        if (is_string($dbDsn) && trim($dbDsn) !== '') {
+            $config['database']['dsn'] = trim($dbDsn);
+        }
+        $dbUser = getenv('DB_USER');
+        if (is_string($dbUser) && trim($dbUser) !== '') {
+            $config['database']['user'] = trim($dbUser);
+        }
+        $dbPass = getenv('DB_PASS');
+        if (is_string($dbPass) && $dbPass !== '') {
+            $config['database']['pass'] = $dbPass;
+        }
+
+        $mailFrom = getenv('MAIL_FROM');
+        if (is_string($mailFrom) && trim($mailFrom) !== '') {
+            $config['mail']['from'] = trim($mailFrom);
+        }
+        $mailToHr = getenv('MAIL_TO_HR');
+        if (is_string($mailToHr) && trim($mailToHr) !== '') {
+            $config['mail']['to_hr'] = trim($mailToHr);
+        }
+
+        $supEmail = getenv('SUPERVISOR_EMAIL');
+        if (is_string($supEmail) && trim($supEmail) !== '') {
+            $config['security']['supervisor_email'] = trim($supEmail);
+        }
+        $supPass = getenv('SUPERVISOR_PASSWORD');
+        if (is_string($supPass) && $supPass !== '') {
+            $config['security']['supervisor_password'] = $supPass;
+        }
+
+        return $config;
+    }
+
+    private static function mergeRecursive(array $base, array $override): array
+    {
+        foreach ($override as $key => $value) {
+            if (array_key_exists($key, $base) && is_array($base[$key]) && is_array($value)) {
+                $base[$key] = self::mergeRecursive($base[$key], $value);
+                continue;
+            }
+            $base[$key] = $value;
+        }
+        return $base;
     }
 }
