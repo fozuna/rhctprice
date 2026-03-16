@@ -52,6 +52,14 @@ class Config
             ],
         ];
 
+        $configPath = dirname(__DIR__) . '/config/config.php';
+        if (is_file($configPath)) {
+            $fromConfig = require $configPath;
+            if (is_array($fromConfig)) {
+                $config = self::mergeRecursive($config, $fromConfig);
+            }
+        }
+
         $localPath = dirname(__DIR__) . '/config/local.php';
         if (is_file($localPath)) {
             $local = require $localPath;

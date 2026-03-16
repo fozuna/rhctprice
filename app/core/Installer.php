@@ -10,7 +10,7 @@ class Installer
 {
     public static function isInstalled(): bool
     {
-        return is_file(self::localConfigPath()) || is_file(self::installLockPath());
+        return is_file(self::installLockPath());
     }
 
     public static function requirements(): array
@@ -50,10 +50,19 @@ class Installer
         }
 
         $config = self::buildConfig($input);
-        $localConfigPath = self::localConfigPath();
-        self::ensureDir(dirname($localConfigPath));
-        self::writeLocalConfig($localConfigPath, $config);
-        $log('Arquivo de configuração local criado.');
+        $configMode = strtolower(trim((string)($input['config_mode'] ?? 'config')));
+        $targetConfigPath = $configMode === 'local' ? self::localConfigPath() : self::configPath();
+        self::ensureDir(dirname($targetConfigPath));
+        $allowOverwrite = ((string)($input['allow_overwrite_config'] ?? '') === '1');
+        if (!is_file($targetConfigPath)) {
+            self::writeConfigAtomic($targetConfigPath, $config);
+            $log('Arquivo de configuração criado: ' . str_replace(self::basePath() . '/', '', $targetConfigPath));
+        } elseif ($allowOverwrite) {
+            self::writeConfigAtomic($targetConfigPath, $config);
+            $log('Arquivo de configuração sobrescrito: ' . str_replace(self::basePath() . '/', '', $targetConfigPath));
+        } else {
+            $log('Arquivo de configuração existente preservado: ' . str_replace(self::basePath() . '/', '', $targetConfigPath));
+        }
 
         $pdo = self::connect($config['database'], $log);
         self::importSchema($pdo, $log);
@@ -73,14 +82,23 @@ class Installer
 
     private static function buildConfig(array $input): array
     {
-        $dsn = trim((string)($input['db_dsn'] ?? ''));
-        $user = trim((string)($input['db_user'] ?? ''));
-        $pass = (string)($input['db_pass'] ?? '');
-        $mailFrom = trim((string)($input['mail_from'] ?? ''));
-        $mailTo = trim((string)($input['mail_to_hr'] ?? ''));
-        $supervisorEmail = trim((string)($input['supervisor_email'] ?? ''));
-        $supervisorPassword = (string)($input['supervisor_password'] ?? '');
-        $env = trim((string)($input['app_env'] ?? 'prod'));
+        $app = Config::app();
+        $dbCurrent = $app['database'] ?? [];
+        $mailCurrent = $app['mail'] ?? [];
+        $secCurrent = $app['security'] ?? [];
+        $logCurrent = $app['logging'] ?? [];
+
+        $dsn = trim((string)($input['db_dsn'] ?? ($dbCurrent['dsn'] ?? '')));
+        $user = trim((string)($input['db_user'] ?? ($dbCurrent['user'] ?? '')));
+        $pass = array_key_exists('db_pass', $input) ? (string)$input['db_pass'] : (string)($dbCurrent['pass'] ?? '');
+        $mailFrom = trim((string)($input['mail_from'] ?? ($mailCurrent['from'] ?? '')));
+        $mailTo = trim((string)($input['mail_to_hr'] ?? ($mailCurrent['to_hr'] ?? '')));
+        $supervisorEmail = trim((string)($input['supervisor_email'] ?? ($secCurrent['supervisor_email'] ?? '')));
+        $supervisorPassword = array_key_exists('supervisor_password', $input) ? (string)$input['supervisor_password'] : (string)($secCurrent['supervisor_password'] ?? '');
+        $env = trim((string)($input['app_env'] ?? ($app['env'] ?? 'prod')));
+        $logLevel = trim((string)($input['log_level'] ?? ($logCurrent['level'] ?? 'INFO')));
+        $alertEmail = trim((string)($input['log_alert_email'] ?? ($logCurrent['alert_email'] ?? '')));
+        $viewerKey = trim((string)($input['log_viewer_key'] ?? ($logCurrent['viewer_key'] ?? '')));
         if ($dsn === '' || $user === '' || $mailFrom === '' || $mailTo === '' || $supervisorEmail === '' || $supervisorPassword === '') {
             throw new RuntimeException('Preencha todos os campos obrigatórios do instalador.');
         }
@@ -96,6 +114,11 @@ class Installer
                 'from' => $mailFrom,
                 'to_hr' => $mailTo,
             ],
+            'logging' => [
+                'level' => $logLevel === '' ? 'INFO' : strtoupper($logLevel),
+                'alert_email' => $alertEmail,
+                'viewer_key' => $viewerKey,
+            ],
             'database' => [
                 'dsn' => $dsn,
                 'user' => $user,
@@ -104,13 +127,40 @@ class Installer
         ];
     }
 
-    private static function writeLocalConfig(string $path, array $config): void
+    private static function writeConfigAtomic(string $path, array $config): void
     {
         $export = var_export($config, true);
         $content = "<?php\nreturn " . $export . ";\n";
-        if (@file_put_contents($path, $content) === false) {
-            throw new RuntimeException('Não foi possível escrever o arquivo app/config/local.php');
+        $tmp = $path . '.tmp';
+        if (@file_put_contents($tmp, $content) === false) {
+            throw new RuntimeException('Não foi possível gravar arquivo temporário de configuração.');
         }
+        if (!@rename($tmp, $path)) {
+            @unlink($tmp);
+            throw new RuntimeException('Não foi possível finalizar escrita do arquivo de configuração.');
+        }
+        @chmod($path, 0644);
+    }
+
+    public static function preflightSummary(): array
+    {
+        $requirements = self::requirements();
+        $failed = [];
+        foreach ($requirements as $req) {
+            if (!$req['ok']) {
+                $failed[] = $req['label'];
+            }
+        }
+        $configFiles = [
+            'config' => is_file(self::configPath()),
+            'local' => is_file(self::localConfigPath()),
+            'lock' => is_file(self::installLockPath()),
+        ];
+        return [
+            'ok' => count($failed) === 0,
+            'failed_requirements' => $failed,
+            'config_files' => $configFiles,
+        ];
     }
 
     private static function connect(array $db, callable $log): PDO
@@ -245,6 +295,11 @@ class Installer
     private static function localConfigPath(): string
     {
         return self::basePath() . '/app/config/local.php';
+    }
+
+    private static function configPath(): string
+    {
+        return self::basePath() . '/app/config/config.php';
     }
 
     private static function installLockPath(): string

@@ -30,6 +30,20 @@ foreach ($requirements as $item) {
     }
 }
 
+$defaults = [
+    'app_env' => (string)($app['env'] ?? 'prod'),
+    'config_mode' => 'config',
+    'db_dsn' => (string)($app['database']['dsn'] ?? ''),
+    'db_user' => (string)($app['database']['user'] ?? ''),
+    'mail_to_hr' => (string)($app['mail']['to_hr'] ?? ''),
+    'mail_from' => (string)($app['mail']['from'] ?? ''),
+    'supervisor_email' => (string)($app['security']['supervisor_email'] ?? ''),
+    'admin_email' => 'admin@ctprice.local',
+    'log_level' => (string)($app['logging']['level'] ?? 'INFO'),
+    'log_alert_email' => (string)($app['logging']['alert_email'] ?? ''),
+    'log_viewer_key' => (string)($app['logging']['viewer_key'] ?? ''),
+];
+
 $messages = [];
 $success = false;
 $selfDeleted = false;
@@ -60,6 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Installer::isInstalled()) {
         try {
             $result = Installer::run([
                 'app_env' => (string)($_POST['app_env'] ?? 'prod'),
+                'config_mode' => (string)($_POST['config_mode'] ?? 'config'),
+                'allow_overwrite_config' => isset($_POST['allow_overwrite_config']) ? '1' : '0',
                 'db_dsn' => (string)($_POST['db_dsn'] ?? ''),
                 'db_user' => (string)($_POST['db_user'] ?? ''),
                 'db_pass' => (string)($_POST['db_pass'] ?? ''),
@@ -69,6 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Installer::isInstalled()) {
                 'supervisor_password' => (string)($_POST['supervisor_password'] ?? ''),
                 'admin_email' => (string)($_POST['admin_email'] ?? ''),
                 'admin_password' => (string)($_POST['admin_password'] ?? ''),
+                'log_level' => (string)($_POST['log_level'] ?? 'INFO'),
+                'log_alert_email' => (string)($_POST['log_alert_email'] ?? ''),
+                'log_viewer_key' => (string)($_POST['log_viewer_key'] ?? ''),
             ], function (string $line) use (&$messages): void {
                 $messages[] = $line;
             });
@@ -131,8 +150,15 @@ $isLocked = Installer::isInstalled();
         <div class="field">
           <label>Ambiente</label>
           <select name="app_env">
-            <option value="prod">prod</option>
-            <option value="dev">dev</option>
+            <option value="prod" <?= $defaults['app_env'] === 'prod' ? 'selected' : '' ?>>prod</option>
+            <option value="dev" <?= $defaults['app_env'] === 'dev' ? 'selected' : '' ?>>dev</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Modo de configuração</label>
+          <select name="config_mode">
+            <option value="config">app/config/config.php (recomendado)</option>
+            <option value="local">app/config/local.php</option>
           </select>
         </div>
         <?php if (is_string(getenv('INSTALLER_KEY')) && trim((string)getenv('INSTALLER_KEY')) !== ''): ?>
@@ -142,15 +168,30 @@ $isLocked = Installer::isInstalled();
         </div>
         <?php endif; ?>
 
-        <div class="field"><label>DB DSN</label><input name="db_dsn" required placeholder="mysql:host=localhost;dbname=...;charset=utf8mb4"></div>
-        <div class="field"><label>DB Usuário</label><input name="db_user" required></div>
+        <div class="field"><label>DB DSN</label><input name="db_dsn" required placeholder="mysql:host=localhost;dbname=...;charset=utf8mb4" value="<?= htmlspecialchars($defaults['db_dsn']) ?>"></div>
+        <div class="field"><label>DB Usuário</label><input name="db_user" required value="<?= htmlspecialchars($defaults['db_user']) ?>"></div>
         <div class="field"><label>DB Senha</label><input name="db_pass" type="password"></div>
-        <div class="field"><label>E-mail RH</label><input name="mail_to_hr" required placeholder="rh@dominio.com"></div>
-        <div class="field"><label>E-mail remetente</label><input name="mail_from" required placeholder="no-reply@dominio.com"></div>
-        <div class="field"><label>E-mail supervisor</label><input name="supervisor_email" required></div>
+        <div class="field"><label>E-mail RH</label><input name="mail_to_hr" required placeholder="rh@dominio.com" value="<?= htmlspecialchars($defaults['mail_to_hr']) ?>"></div>
+        <div class="field"><label>E-mail remetente</label><input name="mail_from" required placeholder="no-reply@dominio.com" value="<?= htmlspecialchars($defaults['mail_from']) ?>"></div>
+        <div class="field"><label>E-mail supervisor</label><input name="supervisor_email" required value="<?= htmlspecialchars($defaults['supervisor_email']) ?>"></div>
         <div class="field"><label>Senha supervisor</label><input name="supervisor_password" type="password" required></div>
-        <div class="field"><label>E-mail admin inicial</label><input name="admin_email" placeholder="admin@dominio.com"></div>
+        <div class="field"><label>E-mail admin inicial</label><input name="admin_email" placeholder="admin@dominio.com" value="<?= htmlspecialchars($defaults['admin_email']) ?>"></div>
         <div class="field"><label>Senha admin inicial</label><input name="admin_password" type="password"></div>
+        <div class="field">
+          <label>Nível de log</label>
+          <select name="log_level">
+            <option value="DEBUG" <?= $defaults['log_level'] === 'DEBUG' ? 'selected' : '' ?>>DEBUG</option>
+            <option value="INFO" <?= $defaults['log_level'] === 'INFO' ? 'selected' : '' ?>>INFO</option>
+            <option value="WARNING" <?= $defaults['log_level'] === 'WARNING' ? 'selected' : '' ?>>WARNING</option>
+            <option value="ERROR" <?= $defaults['log_level'] === 'ERROR' ? 'selected' : '' ?>>ERROR</option>
+            <option value="CRITICAL" <?= $defaults['log_level'] === 'CRITICAL' ? 'selected' : '' ?>>CRITICAL</option>
+          </select>
+        </div>
+        <div class="field"><label>E-mail de alerta de log</label><input name="log_alert_email" placeholder="devops@dominio.com" value="<?= htmlspecialchars($defaults['log_alert_email']) ?>"></div>
+        <div class="field"><label>Chave do visualizador de logs</label><input name="log_viewer_key" placeholder="chave-forte" value="<?= htmlspecialchars($defaults['log_viewer_key']) ?>"></div>
+        <div class="field" style="justify-content:flex-end">
+          <label><input type="checkbox" name="allow_overwrite_config" value="1"> Permitir sobrescrever config existente</label>
+        </div>
         <div style="grid-column:1/-1;display:flex;gap:12px;align-items:center">
           <button type="submit" <?= $allOk ? '' : 'disabled' ?>>Instalar agora</button>
           <span class="note">Após sucesso, o instalador é desativado automaticamente.</span>

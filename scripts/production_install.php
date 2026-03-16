@@ -15,8 +15,11 @@ try {
     $db = $app['database'] ?? [];
     $mail = $app['mail'] ?? [];
     $security = $app['security'] ?? [];
+    $logging = $app['logging'] ?? [];
     $input = [
         'app_env' => getenv('APP_ENV') ?: ($app['env'] ?? 'prod'),
+        'config_mode' => getenv('CONFIG_MODE') ?: 'config',
+        'allow_overwrite_config' => getenv('ALLOW_OVERWRITE_CONFIG') ?: '0',
         'db_dsn' => getenv('DB_DSN') ?: ($db['dsn'] ?? ''),
         'db_user' => getenv('DB_USER') ?: ($db['user'] ?? ''),
         'db_pass' => getenv('DB_PASS') ?: ($db['pass'] ?? ''),
@@ -26,6 +29,9 @@ try {
         'supervisor_password' => getenv('SUPERVISOR_PASSWORD') ?: ($security['supervisor_password'] ?? ''),
         'admin_email' => getenv('ADMIN_EMAIL') ?: 'admin@ctprice.local',
         'admin_password' => getenv('ADMIN_PASSWORD') ?: '',
+        'log_level' => getenv('LOG_LEVEL') ?: ($logging['level'] ?? 'INFO'),
+        'log_alert_email' => getenv('LOG_ALERT_EMAIL') ?: ($logging['alert_email'] ?? ''),
+        'log_viewer_key' => getenv('LOG_VIEWER_KEY') ?: ($logging['viewer_key'] ?? ''),
     ];
     Installer::run($input, function (string $line): void {
         echo $line . PHP_EOL;
