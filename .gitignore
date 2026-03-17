@@ -3,6 +3,7 @@ vendor/
 .env
 .env.*
 app/config/local.php
+/app/config/local.php
 app/config/local.*.php
 storage/sessions/
 storage/ratelimit/

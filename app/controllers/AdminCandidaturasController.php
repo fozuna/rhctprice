@@ -96,7 +96,6 @@ class AdminCandidaturasController extends Controller
         }
 
         // Redireciona usando base_url da aplicação
-        header('Location: ' . (Config::app()['base_url'] ?? '') . '/admin/candidaturas/' . (int)$id);
-        exit;
+        redirect('/admin/candidaturas/' . (int)$id);
     }
 }

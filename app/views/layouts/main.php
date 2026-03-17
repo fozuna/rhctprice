@@ -51,8 +51,7 @@
   <header class="bg-ctpblue text-white">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <span class="inline-block w-3 h-3 bg-ctgreen rounded"></span>
-        <span class="font-semibold">CT Price</span>
+        <img src="<?= $base ?>/assets/logo.png" alt="CT Price" class="h-8 w-auto object-contain">
       </div>
       <nav class="text-sm flex items-center gap-4">
         <a href="<?= $base ?>/" class="hover:text-ctgreen">Vagas</a>

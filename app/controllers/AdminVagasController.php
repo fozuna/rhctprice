@@ -32,8 +32,7 @@ class AdminVagasController extends Controller
             return;
         }
         Vaga::create($data);
-        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
-        exit;
+        redirect('/admin/vagas');
     }
 
     public function edit(string $id): void
@@ -58,8 +57,7 @@ class AdminVagasController extends Controller
             'ativo' => isset($_POST['ativo']) ? 1 : 0,
         ];
         if (!Vaga::update((int)$id, $data)) { echo 'Falha ao atualizar'; return; }
-        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
-        exit;
+        redirect('/admin/vagas');
     }
 
     public function delete(string $id): void
@@ -67,7 +65,6 @@ class AdminVagasController extends Controller
         Auth::requireRole(['admin']);
         if (!Security::csrfCheck($_POST['csrf'] ?? '')) { http_response_code(400); echo 'CSRF inválido'; return; }
         Vaga::delete((int)$id);
-        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
-        exit;
+        redirect('/admin/vagas');
     }
 }

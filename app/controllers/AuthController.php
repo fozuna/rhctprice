@@ -3,7 +3,10 @@ class AuthController extends Controller
 {
     public function login(): void
     {
-        $csrf = Security::csrfToken();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        $csrf = $_SESSION['csrf_token'];
         $expired = isset($_GET['expired']) && $_GET['expired'] === '1';
         $error = $expired ? 'Sessão expirada por inatividade de 20 minutos. Faça login novamente.' : null;
         $this->view->render('admin/login', ['csrf' => $csrf, 'error' => $error, 'isLoginPage' => true], 'layouts/main');
@@ -11,10 +14,12 @@ class AuthController extends Controller
 
     public function doLogin(): void
     {
-        if (!Security::csrfCheck($_POST['csrf'] ?? '')) {
-            http_response_code(400);
-            echo 'Falha na verificação de segurança (CSRF).';
-            return;
+        if (
+            !isset($_POST['csrf_token']) ||
+            !isset($_SESSION['csrf_token']) ||
+            $_POST['csrf_token'] !== $_SESSION['csrf_token']
+        ) {
+            die('Falha na verificação de segurança (CSRF).');
         }
         $email = Security::sanitizeString($_POST['email'] ?? '');
         $pass = $_POST['password'] ?? '';
@@ -40,8 +45,8 @@ class AuthController extends Controller
         try {
             if (Auth::login($email, $pass)) {
                 Security::rateLimitHit($rl['file'], $rl['data'], true, 900);
-                header('Location: ' . Config::app()['base_url'] . '/dashboard');
-                exit;
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                redirect('/dashboard');
             }
             Security::rateLimitHit($rl['file'], $rl['data'], false, 900);
             $this->view->render('admin/login', ['error' => 'Credenciais inválidas', 'csrf' => Security::csrfToken(), 'isLoginPage' => true]);
@@ -54,7 +59,6 @@ class AuthController extends Controller
     public function logout(): void
     {
         Auth::logout();
-        header('Location: ' . Config::app()['base_url'] . '/login');
-        exit;
+        redirect('/login');
     }
 }

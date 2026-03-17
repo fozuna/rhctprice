@@ -42,8 +42,7 @@ class AdminBeneficiosController extends Controller
         }
 
         Beneficio::create($data);
-        header('Location: ' . Config::app()['base_url'] . '/admin/beneficios');
-        exit;
+        redirect('/admin/beneficios');
     }
 
     public function edit(string $id): void
@@ -82,8 +81,7 @@ class AdminBeneficiosController extends Controller
         }
 
         if (!Beneficio::update((int)$id, $data)) { echo 'Falha ao atualizar'; return; }
-        header('Location: ' . Config::app()['base_url'] . '/admin/beneficios');
-        exit;
+        redirect('/admin/beneficios');
     }
 
     public function delete(string $id): void
@@ -96,7 +94,6 @@ class AdminBeneficiosController extends Controller
             $file = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'logos' . DIRECTORY_SEPARATOR . $existing['logo_path'];
             if (is_file($file)) { @unlink($file); }
         }
-        header('Location: ' . Config::app()['base_url'] . '/admin/beneficios');
-        exit;
+        redirect('/admin/beneficios');
     }
 }

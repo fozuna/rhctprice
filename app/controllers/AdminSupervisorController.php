@@ -30,7 +30,6 @@ class AdminSupervisorController extends Controller
         Mailer::sendTo($supervisorEmail, $subject, $message);
         Mailer::notifyHR($subject, $message);
 
-        header('Location: ' . ($cfg['base_url'] ?? '') . '/admin/usuarios/novo?supervisor=ok');
-        exit;
+        redirect('/admin/usuarios/novo?supervisor=ok');
     }
 }

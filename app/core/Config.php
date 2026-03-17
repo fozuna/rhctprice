@@ -3,19 +3,20 @@ class Config
 {
     public static function get(): array
     {
-        $default = [
+        $config = [
             'app' => [
                 'name' => 'CT Price',
                 'base_url' => 'http://localhost/ctprice',
-                'env' => 'production'
+                'public_jobs_url' => 'http://localhost/ctprice/vagas',
+                'env' => 'development'
             ],
             'database' => [
-                'dsn' => 'mysql:host=localhost;dbname=DB;charset=utf8mb4',
-                'user' => 'USER',
-                'pass' => 'PASS'
+                'dsn' => '',
+                'user' => '',
+                'pass' => ''
             ],
             'security' => [
-                'csrf_key' => 'ctprice_csrf_token',
+                'csrf_key' => 'csrf_token',
                 'session_name' => 'CTPRICESESSID',
                 'supervisor_email' => 'admin@seu-dominio.com.br',
                 'supervisor_password' => 'troque-por-uma-senha-forte',
@@ -40,14 +41,22 @@ class Config
             ]
         ];
 
-        $configFile = dirname(__DIR__) . '/config/config.php';
-        if (is_file($configFile)) {
-            $custom = require $configFile;
-            if (is_array($custom)) {
-                $default = array_replace_recursive($default, $custom);
+        $legacyPath = __DIR__ . '/../config/config.php';
+        if (file_exists($legacyPath)) {
+            $legacy = require $legacyPath;
+            if (is_array($legacy)) {
+                $config = array_replace_recursive($config, $legacy);
             }
         }
-        return $default;
+
+        $localPath = __DIR__ . '/../config/local.php';
+        if (file_exists($localPath)) {
+            $local = require $localPath;
+            if (is_array($local)) {
+                $config = array_replace_recursive($config, $local);
+            }
+        }
+        return $config;
     }
 
     public static function app(): array
@@ -58,7 +67,8 @@ class Config
             'product_name' => $cfg['app']['name'],
             'version' => '1.0.0',
             'base_url' => $cfg['app']['base_url'],
-            'env' => $cfg['app']['env'],
+            'public_jobs_url' => $cfg['app']['public_jobs_url'],
+            'env' => $cfg['app']['env'] ?? 'development',
             'security' => $cfg['security'],
             'mail' => $cfg['mail'],
             'logging' => $cfg['logging'],

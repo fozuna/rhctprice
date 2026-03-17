@@ -64,8 +64,7 @@ class AdminUsuariosController extends Controller
             ], 'layouts/admin');
             return;
         }
-        header('Location: ' . (Config::app()['base_url'] ?? '') . '/admin');
-        exit;
+        redirect('/admin');
     }
 
     public function updateRole(string $id): void
@@ -88,8 +87,7 @@ class AdminUsuariosController extends Controller
             echo 'Operação não permitida.';
             return;
         }
-        header('Location: ' . (Config::app()['base_url'] ?? '') . '/admin');
-        exit;
+        redirect('/admin');
     }
 
     public function delete(string $id): void
@@ -108,7 +106,6 @@ class AdminUsuariosController extends Controller
             echo 'Operação não permitida.';
             return;
         }
-        header('Location: ' . (Config::app()['base_url'] ?? '') . '/admin');
-        exit;
+        redirect('/admin');
     }
 }

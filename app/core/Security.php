@@ -27,7 +27,10 @@ class Security
         session_name($name);
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
+        }
+        if (empty($_SESSION['__session_initialized'])) {
             session_regenerate_id(true);
+            $_SESSION['__session_initialized'] = 1;
         }
     }
 
@@ -38,9 +41,7 @@ class Security
         $isLogged = !empty($_SESSION['user_id']);
         if ($isLogged && $last !== null && ($now - (int)$last) > $seconds) {
             Auth::logout();
-            $base = Config::app()['base_url'] ?? '';
-            header('Location: ' . $base . '/admin/login?expired=1');
-            exit;
+            redirect('/admin/login?expired=1');
         }
         $_SESSION['last_activity'] = $now;
     }
@@ -59,17 +60,18 @@ class Security
 
     public static function csrfToken(): string
     {
-        $key = Config::app()['security']['csrf_key'];
-        if (empty($_SESSION[$key])) {
-            $_SESSION[$key] = bin2hex(random_bytes(32));
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
-        return $_SESSION[$key];
+        return $_SESSION['csrf_token'];
     }
 
     public static function csrfCheck(?string $token): bool
     {
-        $key = Config::app()['security']['csrf_key'];
-        return isset($_SESSION[$key]) && hash_equals($_SESSION[$key], (string)$token);
+        if (!isset($token) || !isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        return (string)$token === (string)$_SESSION['csrf_token'];
     }
 
     public static function clientIp(): string

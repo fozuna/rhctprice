@@ -6,11 +6,22 @@ class Auth
         $user = User::findByEmail($email);
         if (!$user) { return false; }
         if (!User::verifyPassword($user, $password)) { return false; }
+        $role = strtolower(trim((string)($user->role ?? '')));
+        $isSupervisor = (int)($user->is_supervisor ?? 0) === 1;
+        if ($role === '' && strtolower($user->email) === 'admin@ctprice.local') {
+            $role = 'admin';
+        }
+        if ($role === 'admin') {
+            $isSupervisor = true;
+        }
+        if ($role === '') {
+            $role = 'viewer';
+        }
         $_SESSION['user'] = true;
         $_SESSION['user_id'] = $user->id;
-        $_SESSION['user_role'] = $user->role;
+        $_SESSION['user_role'] = $role;
         $_SESSION['user_name'] = $user->nome;
-        $_SESSION['user_is_supervisor'] = (int)($user->is_supervisor ?? 0) === 1;
+        $_SESSION['user_is_supervisor'] = $isSupervisor;
         session_regenerate_id(true);
         return true;
     }
@@ -40,7 +51,12 @@ class Auth
         if (!empty($_SESSION['user_is_supervisor'])) {
             return;
         }
-        if (!self::check() || !in_array(self::role(), $roles, true)) {
+        if (!self::check()) {
+            redirect('/login');
+        }
+        $grantedRoles = array_map(static fn($r) => strtolower(trim((string)$r)), $roles);
+        $currentRole = strtolower(trim((string)(self::role() ?? '')));
+        if (!in_array($currentRole, $grantedRoles, true)) {
             http_response_code(403);
             echo 'Acesso negado';
             exit;

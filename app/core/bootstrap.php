@@ -33,6 +33,16 @@ foreach (glob(APP_PATH . DIRECTORY_SEPARATOR . 'controllers' . DIRECTORY_SEPARAT
     require_once $file;
 }
 
+if (!function_exists('redirect')) {
+    function redirect($path) {
+        $config = Config::get();
+        $base = rtrim((string)($config['app']['base_url'] ?? ''), '/');
+        $suffix = '/' . ltrim((string)$path, '/');
+        header('Location: ' . $base . $suffix);
+        exit;
+    }
+}
+
 $app = Config::app();
 $env = strtolower((string)($app['env'] ?? 'production'));
 $debug = ($env === 'dev' || $env === 'development' || $env === 'debug');
@@ -44,7 +54,7 @@ $debug = ($env === 'dev' || $env === 'development' || $env === 'debug');
 @mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'audit', 0775, true);
 @mkdir(BASE_PATH . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'logos', 0775, true);
 
-$errorLogFile = STORAGE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'app-error.log';
+$errorLogFile = STORAGE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . ($debug ? 'app-error.log' : 'error.log');
 @ini_set('log_errors', '1');
 @ini_set('error_log', $errorLogFile);
 

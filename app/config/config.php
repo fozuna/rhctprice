@@ -2,7 +2,7 @@
 return [
     'app' => [
         'name' => 'CT Price',
-        'base_url' => 'https://rhctprice.traxter.com.br/',
+        'base_url' => 'http://localhost/ctprice',
         'env' => 'production'
     ],
     'security' => [
@@ -20,8 +20,8 @@ return [
         'viewer_key' => 'defina-uma-chave-forte-aqui',
     ],
     'database' => [
-        'dsn' => 'mysql:host=localhost;dbname=seu_banco;charset=utf8mb4',
-        'user' => 'seu_usuario',
-        'pass' => 'sua_senha',
+        'dsn' => 'mysql:host=localhost;dbname=ctprice;charset=utf8mb4',
+        'user' => 'root',
+        'pass' => '',
     ],
 ];

@@ -38,7 +38,7 @@
         <?php endif; ?>
         
         <form class="space-y-6" action="<?= $base ?>/admin/login" method="post">
-          <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
+          <input type="hidden" name="csrf_token" value="<?= Security::e($_SESSION['csrf_token']) ?>">
           
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>

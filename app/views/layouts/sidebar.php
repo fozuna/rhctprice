@@ -1,4 +1,9 @@
 <?php
+$cfg = Config::get();
+$publicJobsUrl = (string)($cfg['app']['public_jobs_url'] ?? '');
+if ($publicJobsUrl === '') {
+    $publicJobsUrl = rtrim((string)($cfg['app']['base_url'] ?? ''), '/') . '/vagas';
+}
 ?>
 <aside class="fixed inset-y-0 left-0 w-64 shadow-sm z-30" style="background-color: #00222C;">
   <div class="h-full flex flex-col">
@@ -11,7 +16,7 @@
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
           <span>Dashboard</span>
         </a>
-        <a href="<?= $base ?>/" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
+        <a href="<?= Security::e($publicJobsUrl) ?>" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
           <span>Ver vagas públicas</span>
         </a>
@@ -42,7 +47,7 @@
           <span>Sair</span>
         </a>
       <?php else: ?>
-        <a href="<?= $base ?>/" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
+        <a href="<?= Security::e($publicJobsUrl) ?>" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 8V6h6v2"/><rect x="3" y="8" width="18" height="12" rx="2"/></svg>
           <span>Vagas</span>
         </a>
