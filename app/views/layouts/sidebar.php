@@ -1,5 +1,4 @@
 <?php
-use App\Core\Auth;
 ?>
 <aside class="fixed inset-y-0 left-0 w-64 shadow-sm z-30" style="background-color: #00222C;">
   <div class="h-full flex flex-col">
@@ -54,7 +53,7 @@ use App\Core\Auth;
       <?php endif; ?>
     </nav>
     <div class="px-4 py-4 text-xs text-gray-400 border-t border-gray-600 text-center">
-      <span><?= \App\Core\Config::app()['product_name'] ?? 'TRAXTER RH' ?> • v<?= \App\Core\Config::app()['version'] ?? '' ?></span>
+      <span><?= Config::app()['product_name'] ?? 'TRAXTER RH' ?> • v<?= Config::app()['version'] ?? '' ?></span>
     </div>
   </div>
 </aside>

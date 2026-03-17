@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class Upload
 {
     public static function savePdf(array $file, string $candidateName = '', string $jobTitle = ''): string

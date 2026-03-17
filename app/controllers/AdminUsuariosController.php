@@ -1,14 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Core\Security;
-use App\Core\Config;
-use App\Core\PasswordPolicy;
-use App\Core\SchemaManager;
-use App\Models\User;
-
 class AdminUsuariosController extends Controller
 {
     public function create(): void

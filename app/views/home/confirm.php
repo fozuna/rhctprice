@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="bg-white shadow rounded p-6">
   <h2 class="text-xl font-semibold text-ctgreen">Candidatura enviada!</h2>

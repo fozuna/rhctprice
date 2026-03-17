@@ -1,10 +1,4 @@
 <?php
-namespace App\Models;
-
-use App\Core\Database;
-use DateTimeImmutable;
-use PDO;
-
 class PasswordReset
 {
     public static function create(int $userId, string $rawToken, int $ttlMinutes = 30): void

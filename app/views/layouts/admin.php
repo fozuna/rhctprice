@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -22,7 +21,7 @@ use App\Core\Security;
 
   <footer class="fixed bottom-0 left-64 right-0 border-t bg-white z-20">
     <div class="px-6 py-3 text-gray-500 text-sm text-center">
-      © <?= date('Y') ?> <?= \App\Core\Config::app()['product_name'] ?? 'TRAXTER RH' ?>. Todos os direitos reservados. • v<?= \App\Core\Config::app()['version'] ?? '' ?>
+      © <?= date('Y') ?> <?= Config::app()['product_name'] ?? 'TRAXTER RH' ?>. Todos os direitos reservados. • v<?= Config::app()['version'] ?? '' ?>
     </div>
   </footer>
 </body>

@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="flex items-center justify-between">
   <h2 class="text-xl font-semibold text-ctpblue">Vagas</h2>
@@ -30,7 +29,7 @@ use App\Core\Security;
           <td class="p-3 space-x-2">
             <a href="<?= $base ?>/admin/vagas/editar/<?= (int)$v['id'] ?>" class="text-ctpblue hover:text-ctgreen">Editar</a>
             <form action="<?= $base ?>/admin/vagas/excluir/<?= (int)$v['id'] ?>" method="post" class="inline" data-confirm-message="Excluir esta vaga?">
-              <input type="hidden" name="csrf" value="<?= Security::e(\App\Core\Security::csrfToken()) ?>">
+              <input type="hidden" name="csrf" value="<?= Security::e(Security::csrfToken()) ?>">
               <button class="text-red-600 hover:text-red-800">Excluir</button>
             </form>
           </td>

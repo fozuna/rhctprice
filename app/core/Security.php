@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class Security
 {
     public static function startSecureSession(string $name = 'CTPRICESESSID'): void
@@ -39,8 +37,8 @@ class Security
         $last = $_SESSION['last_activity'] ?? null;
         $isLogged = !empty($_SESSION['user_id']);
         if ($isLogged && $last !== null && ($now - (int)$last) > $seconds) {
-            \App\Core\Auth::logout();
-            $base = \App\Core\Config::app()['base_url'] ?? '';
+            Auth::logout();
+            $base = Config::app()['base_url'] ?? '';
             header('Location: ' . $base . '/admin/login?expired=1');
             exit;
         }

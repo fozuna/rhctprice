@@ -1,10 +1,4 @@
 <?php
-
-namespace App\Controllers;
-
-use App\Models\Candidatura;
-use App\Core\Security;
-
 class ApiController
 {
     public function checkCpf(): void

@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="bg-white shadow rounded p-6 max-w-2xl">
   <h2 class="text-xl font-semibold text-ctpblue mb-4"><?= isset($beneficio['id']) ? 'Editar benefício' : 'Novo benefício' ?></h2>

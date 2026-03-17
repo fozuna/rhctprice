@@ -1,13 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Core\Security;
-use App\Core\Upload;
-use App\Core\Config;
-use App\Models\Beneficio;
-
 class AdminBeneficiosController extends Controller
 {
     public function index(): void

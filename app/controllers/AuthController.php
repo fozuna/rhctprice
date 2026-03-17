@@ -1,10 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Security;
-use App\Core\Auth;
-
 class AuthController extends Controller
 {
     public function login(): void
@@ -46,7 +40,7 @@ class AuthController extends Controller
         if (Auth::login($email, $pass)) {
             // Sucesso: resetar contador
             Security::rateLimitHit($rl['file'], $rl['data'], true, 900);
-            header('Location: ' . \App\Core\Config::app()['base_url'] . '/admin');
+            header('Location: ' . Config::app()['base_url'] . '/admin');
             exit;
         }
         // Falha: registrar tentativa
@@ -57,7 +51,7 @@ class AuthController extends Controller
     public function logout(): void
     {
         Auth::logout();
-        header('Location: ' . \App\Core\Config::app()['base_url'] . '/admin/login');
+        header('Location: ' . Config::app()['base_url'] . '/admin/login');
         exit;
     }
 }

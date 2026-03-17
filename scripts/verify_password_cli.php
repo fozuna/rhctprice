@@ -1,11 +1,6 @@
 <?php
 declare(strict_types=1);
-
-use App\Core\Autoload;
-use App\Models\User;
-
-require __DIR__ . '/../app/core/Autoload.php';
-Autoload::register();
+require_once __DIR__ . '/../app/core/bootstrap.php';
 
 $email = $argv[1] ?? '';
 $password = $argv[2] ?? '';

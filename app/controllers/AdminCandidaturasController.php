@@ -1,15 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Core\Security;
-use App\Core\Config;
-use App\Models\Candidatura;
-use App\Models\Vaga;
-
-use App\Models\PipelineStage;
-
 class AdminCandidaturasController extends Controller
 {
     public function index(): void
@@ -83,7 +72,7 @@ class AdminCandidaturasController extends Controller
         $observacoes = Security::sanitizeString($_POST['observacoes'] ?? '');
         $usuarioId = $_SESSION['user_id'] ?? null;
         
-        $pdo = \App\Core\Database::conn();
+        $pdo = Database::conn();
         try {
             $pdo->beginTransaction();
             

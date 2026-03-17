@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class View
 {
     public function render(string $template, array $params = [], string $layout = 'layouts/main'): void

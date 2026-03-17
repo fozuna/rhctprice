@@ -1,9 +1,5 @@
 <?php
-require __DIR__ . '/../app/core/bootstrap.php';
-
-use App\Models\User;
-use App\Models\Vaga;
-
+require_once __DIR__ . '/../app/core/bootstrap.php';
 // Uso: php scripts/init.php [email] [senha] [--seed]
 $email = $argv[1] ?? 'admin@ctprice.local';
 $password = $argv[2] ?? 'ChangeMe2025!';

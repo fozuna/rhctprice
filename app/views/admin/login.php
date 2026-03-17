@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="min-h-screen flex">
   <!-- Left Container - Branding Area -->

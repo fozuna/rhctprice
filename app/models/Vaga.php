@@ -1,9 +1,4 @@
 <?php
-namespace App\Models;
-
-use App\Core\Database;
-use PDO;
-
 class Vaga
 {
     public int $id;

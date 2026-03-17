@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class SchemaManager
 {
     private static bool $initialized = false;

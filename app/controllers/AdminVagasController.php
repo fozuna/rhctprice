@@ -1,11 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Core\Security;
-use App\Models\Vaga;
-
 class AdminVagasController extends Controller
 {
     public function index(): void
@@ -39,7 +32,7 @@ class AdminVagasController extends Controller
             return;
         }
         Vaga::create($data);
-        header('Location: ' . \App\Core\Config::app()['base_url'] . '/admin/vagas');
+        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
         exit;
     }
 
@@ -65,7 +58,7 @@ class AdminVagasController extends Controller
             'ativo' => isset($_POST['ativo']) ? 1 : 0,
         ];
         if (!Vaga::update((int)$id, $data)) { echo 'Falha ao atualizar'; return; }
-        header('Location: ' . \App\Core\Config::app()['base_url'] . '/admin/vagas');
+        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
         exit;
     }
 
@@ -74,7 +67,7 @@ class AdminVagasController extends Controller
         Auth::requireRole(['admin']);
         if (!Security::csrfCheck($_POST['csrf'] ?? '')) { http_response_code(400); echo 'CSRF inválido'; return; }
         Vaga::delete((int)$id);
-        header('Location: ' . \App\Core\Config::app()['base_url'] . '/admin/vagas');
+        header('Location: ' . Config::app()['base_url'] . '/admin/vagas');
         exit;
     }
 }

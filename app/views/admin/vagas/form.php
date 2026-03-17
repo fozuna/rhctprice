@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 $editing = !empty($vaga);
 ?>
 <div class="max-w-2xl">

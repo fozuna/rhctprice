@@ -1,14 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Security;
-use App\Core\Upload;
-use App\Core\Mailer;
-use App\Models\Vaga;
-use App\Models\Candidatura;
-use App\Models\Beneficio;
-
 class HomeController extends Controller
 {
     public function index(): void

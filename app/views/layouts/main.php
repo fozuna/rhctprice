@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -108,7 +107,7 @@ use App\Core\Security;
   <?php if (!$isLoginPage): ?>
   <footer class="fixed bottom-0 left-0 right-0 border-t bg-white">
     <div class="max-w-6xl mx-auto px-4 py-6 text-gray-500 text-sm text-center">
-      © <?= date('Y') ?> <?= \App\Core\Config::app()['product_name'] ?? 'TRAXTER RH' ?>. Todos os direitos reservados. • v<?= \App\Core\Config::app()['version'] ?? '' ?>
+      © <?= date('Y') ?> <?= Config::app()['product_name'] ?? 'TRAXTER RH' ?>. Todos os direitos reservados. • v<?= Config::app()['version'] ?? '' ?>
     </div>
   </footer>
   <?php endif; ?>

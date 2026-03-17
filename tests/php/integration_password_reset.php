@@ -4,10 +4,7 @@ if (@fsockopen('127.0.0.1', 3306, $errno, $errstr, 1) === false) {
     echo "SKIP integration_password_reset (MySQL indisponível)\n";
     exit(0);
 }
-require __DIR__ . '/../../app/core/bootstrap.php';
-
-use App\Models\PasswordReset;
-use App\Models\User;
+require_once __DIR__ . '/../../app/core/bootstrap.php';
 
 $email = 'reset_' . time() . '@ctprice.local';
 $oldHash = password_hash('Abcd1234!xyz', PASSWORD_BCRYPT);

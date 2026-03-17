@@ -1,9 +1,4 @@
 <?php
-namespace App\Models;
-
-use App\Core\Database;
-use PDO;
-
 class Candidatura
 {
     public static function create(array $data): int

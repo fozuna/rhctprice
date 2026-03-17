@@ -24,4 +24,4 @@ $projectFile = realpath(__DIR__ . $uri);
 if ($projectFile && is_file($projectFile)) {
     return false;
 }
-require __DIR__ . '/public/index.php';
+require_once __DIR__ . '/public/index.php';

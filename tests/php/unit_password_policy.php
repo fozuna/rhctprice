@@ -1,7 +1,5 @@
 <?php
-require __DIR__ . '/../../app/core/bootstrap.php';
-
-use App\Core\PasswordPolicy;
+require_once __DIR__ . '/../../app/core/bootstrap.php';
 
 $weak = PasswordPolicy::validate('abc');
 if ($weak['valid']) {
@@ -16,4 +14,3 @@ if (!$strong['valid']) {
 }
 
 echo "OK unit_password_policy\n";
-

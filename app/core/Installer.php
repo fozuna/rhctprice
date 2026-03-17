@@ -1,11 +1,4 @@
 <?php
-namespace App\Core;
-
-use App\Models\User;
-use PDO;
-use RuntimeException;
-use Throwable;
-
 class Installer
 {
     public static function isInstalled(): bool

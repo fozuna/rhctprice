@@ -1,12 +1,6 @@
 <?php
 declare(strict_types=1);
-
-use App\Core\Autoload;
-use App\Core\Config;
-use App\Core\Database;
-
-require __DIR__ . '/../app/core/Autoload.php';
-Autoload::register();
+require_once __DIR__ . '/../app/core/bootstrap.php';
 
 define('BASE_PATH', dirname(__DIR__));
 define('STORAGE_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'storage');

@@ -1,60 +1,72 @@
 <?php
-use App\Core\Autoload;
-use App\Core\Security;
-use App\Core\Config;
-use App\Core\Logger;
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', dirname(__DIR__, 2));
+}
+if (!defined('APP_PATH')) {
+    define('APP_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'app');
+}
+if (!defined('PUBLIC_PATH')) {
+    define('PUBLIC_PATH', BASE_PATH);
+}
+if (!defined('STORAGE_PATH')) {
+    define('STORAGE_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'storage');
+}
 
-require __DIR__ . '/Autoload.php';
-Autoload::register();
+require_once __DIR__ . '/Config.php';
+require_once __DIR__ . '/Logger.php';
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/PasswordPolicy.php';
+require_once __DIR__ . '/Security.php';
+require_once __DIR__ . '/Auth.php';
+require_once __DIR__ . '/View.php';
+require_once __DIR__ . '/Controller.php';
+require_once __DIR__ . '/Router.php';
+require_once __DIR__ . '/Upload.php';
+require_once __DIR__ . '/SchemaManager.php';
+require_once __DIR__ . '/Mailer.php';
+require_once __DIR__ . '/Installer.php';
 
-define('BASE_PATH', dirname(__DIR__, 2));
-define('APP_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'app');
-define('PUBLIC_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'public');
-define('STORAGE_PATH', BASE_PATH . DIRECTORY_SEPARATOR . 'storage');
+foreach (glob(APP_PATH . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . '*.php') as $file) {
+    require_once $file;
+}
+foreach (glob(APP_PATH . DIRECTORY_SEPARATOR . 'controllers' . DIRECTORY_SEPARATOR . '*.php') as $file) {
+    require_once $file;
+}
 
-// Configurações básicas
 $app = Config::app();
+$env = strtolower((string)($app['env'] ?? 'production'));
+$debug = ($env === 'dev' || $env === 'development' || $env === 'debug');
 
-$logsDir = STORAGE_PATH . DIRECTORY_SEPARATOR . 'logs';
-if (!is_dir($logsDir)) {
-    @mkdir($logsDir, 0775, true);
-}
-$errorLogFile = $logsDir . DIRECTORY_SEPARATOR . 'app-error.log';
-if (is_file($errorLogFile) || is_dir($logsDir)) {
-    @ini_set('log_errors', '1');
-    @ini_set('error_log', $errorLogFile);
-}
+@mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'logs', 0775, true);
+@mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'sessions', 0775, true);
+@mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'resumes', 0775, true);
+@mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'ratelimit', 0775, true);
+@mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'audit', 0775, true);
+@mkdir(BASE_PATH . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'logos', 0775, true);
+
+$errorLogFile = STORAGE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'app-error.log';
+@ini_set('log_errors', '1');
+@ini_set('error_log', $errorLogFile);
+
+error_reporting(E_ALL);
+ini_set('display_errors', $debug ? '1' : '0');
+
 Logger::init($app);
-
-// Segurança de sessão
-Security::startSecureSession($app['security']['session_name']);
-// Aplicar timeout de inatividade de 20 minutos
+Security::startSecureSession($app['security']['session_name'] ?? 'CTPRICESESSID');
 Security::enforceInactivityTimeout(1200);
 
-// Erros em dev
-if ($app['env'] === 'dev') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', '1');
-} else {
-    error_reporting(E_ALL);
-    ini_set('display_errors', '0');
-}
-
-set_exception_handler(function (\Throwable $e) use ($app): void {
+set_exception_handler(function (\Throwable $e) use ($debug): void {
     http_response_code(500);
     Logger::exception($e, 'CRITICAL', Logger::captureContext(500));
-    error_log('[UNCAUGHT] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     if (!headers_sent()) {
         header('Content-Type: text/plain; charset=UTF-8');
     }
-    if (($app['env'] ?? 'prod') !== 'dev') {
-        $ref = substr(hash('sha256', $e->getMessage() . '|' . $e->getFile() . '|' . $e->getLine()), 0, 12);
-        echo 'Erro interno do servidor. Referência: ' . $ref;
+    if ($debug) {
+        echo "Erro 500\n\n";
+        echo $e;
         return;
     }
     echo 'Erro interno do servidor.';
-    echo "\n\n";
-    echo (string)$e;
 });
 
 set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
@@ -65,39 +77,24 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
         $level = 'INFO';
     }
     Logger::log($level, $message, Logger::captureContext(http_response_code(), [
-        'php_error' => ['severity' => $severity, 'file' => $file, 'line' => $line],
+        'php_error' => ['severity' => $severity, 'file' => $file, 'line' => $line]
     ]));
     return false;
 });
 
-register_shutdown_function(function (): void {
+register_shutdown_function(function () use ($debug): void {
     $last = error_get_last();
     if (!is_array($last)) {
         return;
     }
-    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
-    if (!in_array((int)$last['type'], $fatalTypes, true)) {
+    if (!in_array((int)$last['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
         return;
     }
     http_response_code(500);
     Logger::critical('Fatal shutdown error', Logger::captureContext(500, ['fatal' => $last]));
+    if ($debug && !headers_sent()) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo "Fatal 500\n";
+        echo $last['message'] . ' @ ' . $last['file'] . ':' . $last['line'];
+    }
 });
-
-// Garantir diretório de currículos
-if (!is_dir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'resumes')) {
-    @mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'resumes', 0775, true);
-}
-
-if (!is_dir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'ratelimit')) {
-    @mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'ratelimit', 0775, true);
-}
-
-if (!is_dir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'audit')) {
-    @mkdir(STORAGE_PATH . DIRECTORY_SEPARATOR . 'audit', 0775, true);
-}
-
-// Garantir diretório público para logos
-$logosDir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'logos';
-if (!is_dir($logosDir)) {
-    @mkdir($logosDir, 0775, true);
-}

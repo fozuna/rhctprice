@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="bg-white shadow rounded p-6">
   <a href="<?= $base ?>/" class="text-sm text-ctpblue hover:text-ctgreen">← Voltar</a>

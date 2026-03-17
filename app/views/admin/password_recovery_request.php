@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
   <div class="w-full max-w-md bg-white shadow-lg rounded-lg p-8">

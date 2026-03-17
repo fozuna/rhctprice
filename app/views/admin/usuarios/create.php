@@ -1,6 +1,5 @@
 <?php
-use App\Core\Security;
-$base = \App\Core\Config::app()['base_url'] ?? '';
+$base = Config::app()['base_url'] ?? '';
 ?>
 <div class="max-w-xl bg-white shadow rounded p-6">
   <h2 class="text-xl font-semibold text-ctpblue">Cadastrar novo usuário</h2>

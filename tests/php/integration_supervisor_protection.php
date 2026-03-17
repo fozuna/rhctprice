@@ -4,11 +4,7 @@ if (@fsockopen('127.0.0.1', 3306, $errno, $errstr, 1) === false) {
     echo "SKIP integration_supervisor_protection (MySQL indisponível)\n";
     exit(0);
 }
-require __DIR__ . '/../../app/core/bootstrap.php';
-
-use App\Core\Config;
-use App\Core\Database;
-use App\Models\User;
+require_once __DIR__ . '/../../app/core/bootstrap.php';
 
 $cfg = Config::app();
 $supervisorEmail = $cfg['security']['supervisor_email'];

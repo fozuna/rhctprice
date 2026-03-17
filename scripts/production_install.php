@@ -1,14 +1,6 @@
 <?php
 declare(strict_types=1);
-
-use App\Core\Autoload;
-use App\Core\Config;
-use App\Core\Installer;
-
-require __DIR__ . '/../app/core/Autoload.php';
-Autoload::register();
-
-define('BASE_PATH', dirname(__DIR__));
+require_once __DIR__ . '/../app/core/bootstrap.php';
 echo "Iniciando instalação de produção...\n";
 try {
     $app = Config::app();

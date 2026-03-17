@@ -1,15 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Config;
-use App\Core\Controller;
-use App\Core\Mailer;
-use App\Core\PasswordPolicy;
-use App\Core\SchemaManager;
-use App\Core\Security;
-use App\Models\PasswordReset;
-use App\Models\User;
-
 class PasswordRecoveryController extends Controller
 {
     public function requestForm(): void

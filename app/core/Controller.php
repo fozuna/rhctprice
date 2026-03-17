@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class Controller
 {
     protected View $view;

@@ -1,5 +1,4 @@
 <?php
-use App\Core\Security;
 ?>
 <div class="flex items-center justify-between">
   <h2 class="text-xl font-semibold text-ctpblue">Benefícios</h2>

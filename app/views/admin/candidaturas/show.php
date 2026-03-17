@@ -1,6 +1,4 @@
 <?php
-use App\Core\Security;
-use App\Models\Candidatura;
 ?>
 <div class="bg-white shadow rounded p-6">
   <div class="flex justify-between items-center mb-6">

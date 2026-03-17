@@ -1,15 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Auth;
-use App\Core\Config;
-use App\Core\Controller;
-use App\Core\Mailer;
-use App\Core\SchemaManager;
-use App\Core\Security;
-use App\Models\AuditLog;
-use App\Models\User;
-
 class AdminSupervisorController extends Controller
 {
     public function ensure(): void

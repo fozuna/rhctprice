@@ -1,8 +1,4 @@
 <?php
-namespace App\Core;
-
-use Throwable;
-
 class Logger
 {
     private static bool $initialized = false;

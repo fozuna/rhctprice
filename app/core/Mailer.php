@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class Mailer
 {
     public static function notifyHR(string $subject, string $message): bool

@@ -1,6 +1,4 @@
 <?php
-namespace App\Core;
-
 class PasswordPolicy
 {
     public static function validate(string $password): array

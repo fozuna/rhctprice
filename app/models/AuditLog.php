@@ -1,8 +1,4 @@
 <?php
-namespace App\Models;
-
-use App\Core\Database;
-
 class AuditLog
 {
     public static function log(?int $actorUserId, ?int $targetUserId, string $action, ?string $details = null, ?string $ip = null): void

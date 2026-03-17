@@ -1,12 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Models\Vaga;
-use App\Models\Candidatura;
-use App\Models\PipelineStage;
-
 class AdminController extends Controller
 {
     public function index(): void

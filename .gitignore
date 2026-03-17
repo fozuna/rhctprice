@@ -4,7 +4,6 @@ vendor/
 .env.*
 app/config/local.php
 app/config/local.*.php
-app/config/config.php
 storage/sessions/
 storage/ratelimit/
 storage/resumes/

@@ -1,13 +1,4 @@
 <?php
-namespace App\Controllers;
-
-use App\Core\Controller;
-use App\Core\Auth;
-use App\Core\Security;
-use App\Models\Candidatura;
-use App\Models\PipelineStage;
-use App\Models\Vaga;
-
 class AdminPipelineController extends Controller
 {
     public function index(): void
