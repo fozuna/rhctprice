@@ -38,7 +38,8 @@ try {
         if (!isset($_SESSION['user'])) {
             redirect('/login');
         }
-        redirect('/dashboard');
+        $postLoginPath = (class_exists('AdminController') && method_exists('AdminController', 'index')) ? '/admin' : '/login';
+        redirect($postLoginPath);
     }
 
     $router = new Router($basePath);

@@ -1,6 +1,14 @@
 <?php
 class AuthController extends Controller
 {
+    private function postLoginPath(): string
+    {
+        if (class_exists('AdminController') && method_exists('AdminController', 'index')) {
+            return '/admin';
+        }
+        return '/login';
+    }
+
     public function login(): void
     {
         if (empty($_SESSION['csrf_token'])) {
@@ -46,7 +54,7 @@ class AuthController extends Controller
             if (Auth::login($email, $pass)) {
                 Security::rateLimitHit($rl['file'], $rl['data'], true, 900);
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-                redirect('/dashboard');
+                redirect($this->postLoginPath());
             }
             Security::rateLimitHit($rl['file'], $rl['data'], false, 900);
             $this->view->render('admin/login', ['error' => 'Credenciais inválidas', 'csrf' => Security::csrfToken(), 'isLoginPage' => true]);
