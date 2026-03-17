@@ -6,7 +6,7 @@ class Config
         $default = [
             'app' => [
                 'name' => 'CT Price',
-                'base_url' => 'https://rhctprice.traxter.com.br/',
+                'base_url' => 'http://localhost/ctprice',
                 'env' => 'production'
             ],
             'database' => [

@@ -37,21 +37,24 @@ class AuthController extends Controller
             return;
         }
 
-        if (Auth::login($email, $pass)) {
-            // Sucesso: resetar contador
-            Security::rateLimitHit($rl['file'], $rl['data'], true, 900);
-            header('Location: ' . Config::app()['base_url'] . '/admin');
-            exit;
+        try {
+            if (Auth::login($email, $pass)) {
+                Security::rateLimitHit($rl['file'], $rl['data'], true, 900);
+                header('Location: ' . Config::app()['base_url'] . '/dashboard');
+                exit;
+            }
+            Security::rateLimitHit($rl['file'], $rl['data'], false, 900);
+            $this->view->render('admin/login', ['error' => 'Credenciais inválidas', 'csrf' => Security::csrfToken(), 'isLoginPage' => true]);
+        } catch (\Throwable $e) {
+            error_log('[LOGIN_ERROR] ' . $e->getMessage());
+            $this->view->render('admin/login', ['error' => 'Não foi possível autenticar agora. Verifique a configuração do banco e tente novamente.', 'csrf' => Security::csrfToken(), 'isLoginPage' => true]);
         }
-        // Falha: registrar tentativa
-        Security::rateLimitHit($rl['file'], $rl['data'], false, 900);
-        $this->view->render('admin/login', ['error' => 'Credenciais inválidas', 'csrf' => Security::csrfToken(), 'isLoginPage' => true]);
     }
 
     public function logout(): void
     {
         Auth::logout();
-        header('Location: ' . Config::app()['base_url'] . '/admin/login');
+        header('Location: ' . Config::app()['base_url'] . '/login');
         exit;
     }
 }

@@ -6,6 +6,7 @@ class Auth
         $user = User::findByEmail($email);
         if (!$user) { return false; }
         if (!User::verifyPassword($user, $password)) { return false; }
+        $_SESSION['user'] = true;
         $_SESSION['user_id'] = $user->id;
         $_SESSION['user_role'] = $user->role;
         $_SESSION['user_name'] = $user->nome;

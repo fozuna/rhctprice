@@ -7,14 +7,43 @@ require_once __DIR__ . '/app/core/bootstrap.php';
 $cfg = Config::get();
 $baseUrl = (string)($cfg['app']['base_url'] ?? '');
 $basePath = (string)parse_url($baseUrl, PHP_URL_PATH);
+$basePath = rtrim($basePath, '/');
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+if ($scriptDir !== '' && $scriptDir !== '/' && strncmp($requestPath, $scriptDir, strlen($scriptDir)) === 0) {
+    $requestPath = substr($requestPath, strlen($scriptDir)) ?: '/';
+}
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+if ($requestPath === '/' || $requestPath === '') {
+    if (!isset($_SESSION['user'])) {
+        header('Location: ' . ($basePath === '' ? '' : $basePath) . '/login');
+        exit;
+    }
+    header('Location: ' . ($basePath === '' ? '' : $basePath) . '/dashboard');
+    exit;
+}
+
 $router = new Router($basePath);
 
-$router->get('/', [HomeController::class, 'index']);
+$router->get('/vagas', [HomeController::class, 'index']);
 $router->get('/vaga/{id}', [HomeController::class, 'vaga']);
 $router->post('/candidatar/{id}', [HomeController::class, 'candidatar']);
 
 $router->post('/api/check-cpf', [ApiController::class, 'checkCpf']);
 $router->post('/api/pipeline/move', [AdminPipelineController::class, 'move']);
+
+$router->get('/login', [AuthController::class, 'login']);
+$router->post('/login', [AuthController::class, 'doLogin']);
+$router->get('/logout', [AuthController::class, 'logout']);
+$router->get('/forgot-password', [PasswordRecoveryController::class, 'requestForm']);
+$router->post('/forgot-password', [PasswordRecoveryController::class, 'sendToken']);
+$router->get('/reset-password/{token}', [PasswordRecoveryController::class, 'resetForm']);
+$router->post('/reset-password/{token}', [PasswordRecoveryController::class, 'performReset']);
+$router->get('/dashboard', [AdminController::class, 'index']);
 
 $router->get('/admin/login', [AuthController::class, 'login']);
 $router->post('/admin/login', [AuthController::class, 'doLogin']);
@@ -23,7 +52,6 @@ $router->get('/admin/forgot-password', [PasswordRecoveryController::class, 'requ
 $router->post('/admin/forgot-password', [PasswordRecoveryController::class, 'sendToken']);
 $router->get('/admin/reset-password/{token}', [PasswordRecoveryController::class, 'resetForm']);
 $router->post('/admin/reset-password/{token}', [PasswordRecoveryController::class, 'performReset']);
-
 $router->get('/admin', [AdminController::class, 'index']);
 $router->get('/admin/pipeline', [AdminPipelineController::class, 'index']);
 
