@@ -4,6 +4,7 @@ class Candidatura
     public static function create(array $data): int
     {
         self::ensureCpfColumn();
+        self::ensureStageColumn();
         $sql = 'INSERT INTO candidaturas (vaga_id, nome, email, telefone, cpf, cargo_pretendido, experiencia, pdf_path, status) VALUES (?,?,?,?,?,?,?,?,?)';
         $stmt = Database::conn()->prepare($sql);
         $stmt->execute([
@@ -14,6 +15,7 @@ class Candidatura
 
     public static function all(array $filters = []): array
     {
+        self::ensureStageColumn();
         $sql = 'SELECT c.*, v.titulo AS vaga_titulo, s.nome as stage_nome, s.cor as stage_cor 
                 FROM candidaturas c 
                 LEFT JOIN vagas v ON v.id = c.vaga_id 
@@ -33,6 +35,7 @@ class Candidatura
 
     public static function find(int $id): ?array
     {
+        self::ensureStageColumn();
         $sql = 'SELECT c.*, v.titulo AS vaga_titulo, s.nome as stage_nome, s.cor as stage_cor 
                 FROM candidaturas c 
                 LEFT JOIN vagas v ON v.id = c.vaga_id 
@@ -46,6 +49,7 @@ class Candidatura
 
     public static function updateStage(int $id, int $newStageId, int $userId): bool
     {
+        self::ensureStageColumn();
         $candidatura = self::find($id);
         if (!$candidatura) return false;
 
@@ -177,6 +181,26 @@ class Candidatura
             }
         } catch (\Throwable $e) {
             // Silencia para não quebrar fluxo
+        }
+    }
+
+    private static function ensureStageColumn(): void
+    {
+        try {
+            $db = Database::conn();
+            $check = $db->prepare('SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+            $check->execute(['candidaturas', 'stage_id']);
+            $exists = (int)($check->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0;
+            if (!$exists) {
+                $db->exec('ALTER TABLE candidaturas ADD COLUMN stage_id INT NULL');
+                try {
+                    $db->exec('ALTER TABLE candidaturas ADD INDEX idx_candidaturas_stage_id (stage_id)');
+                } catch (\Throwable $e2) { }
+                try {
+                    $db->exec('ALTER TABLE candidaturas ADD CONSTRAINT fk_cand_stage FOREIGN KEY (stage_id) REFERENCES pipeline_stages(id) ON DELETE SET NULL');
+                } catch (\Throwable $e3) { }
+            }
+        } catch (\Throwable $e) {
         }
     }
 
