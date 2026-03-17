@@ -3,24 +3,6 @@ require_once __DIR__ . '/app/core/bootstrap.php';
 
 try {
     $cfg = Config::get();
-    $env = strtolower((string)($cfg['app']['env'] ?? 'development'));
-    $isProd = ($env === 'production');
-    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
-    $isLocalHost = ($host === 'localhost' || str_starts_with($host, 'localhost:') || $host === '127.0.0.1' || str_starts_with($host, '127.0.0.1:') || $host === '::1');
-
-    if ($isProd && !$isLocalHost) {
-        $localPath = APP_PATH . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'local.php';
-        if (!is_file($localPath)) {
-            throw new RuntimeException('Configuração de produção ausente: app/config/local.php');
-        }
-        $baseUrlCheck = trim((string)($cfg['app']['base_url'] ?? ''));
-        $dsn = trim((string)($cfg['database']['dsn'] ?? ''));
-        $dbUser = trim((string)($cfg['database']['user'] ?? ''));
-        if ($baseUrlCheck === '' || $dsn === '' || $dbUser === '') {
-            throw new RuntimeException('Configuração de produção inválida: base_url/DB_DSN/DB_USER obrigatórios.');
-        }
-    }
-
     $baseUrl = (string)($cfg['app']['base_url'] ?? '');
     $basePath = (string)parse_url($baseUrl, PHP_URL_PATH);
     $basePath = rtrim($basePath, '/');
@@ -30,16 +12,11 @@ try {
         $requestPath = substr($requestPath, strlen($scriptDir)) ?: '/';
     }
 
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-
     if ($requestPath === '/' || $requestPath === '') {
         if (!isset($_SESSION['user'])) {
             redirect('/login');
         }
-        $postLoginPath = (class_exists('AdminController') && method_exists('AdminController', 'index')) ? '/admin' : '/login';
-        redirect($postLoginPath);
+        redirect('/admin');
     }
 
     $router = new Router($basePath);
@@ -58,7 +35,6 @@ try {
     $router->post('/forgot-password', [PasswordRecoveryController::class, 'sendToken']);
     $router->get('/reset-password/{token}', [PasswordRecoveryController::class, 'resetForm']);
     $router->post('/reset-password/{token}', [PasswordRecoveryController::class, 'performReset']);
-    $router->get('/dashboard', [AdminController::class, 'index']);
 
     $router->get('/admin/login', [AuthController::class, 'login']);
     $router->post('/admin/login', [AuthController::class, 'doLogin']);

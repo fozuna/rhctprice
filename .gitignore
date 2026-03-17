@@ -2,7 +2,6 @@ node_modules/
 vendor/
 .env
 .env.*
-app/config/config.php
 app/config/local.php
 /app/config/local.php
 app/config/local.*.php

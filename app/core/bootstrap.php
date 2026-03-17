@@ -33,12 +33,42 @@ foreach (glob(APP_PATH . DIRECTORY_SEPARATOR . 'controllers' . DIRECTORY_SEPARAT
     require_once $file;
 }
 
-if (!function_exists('redirect')) {
-    function redirect($path) {
+if (!function_exists('app_base_url')) {
+    function app_base_url(): string
+    {
         $config = Config::get();
-        $base = rtrim((string)($config['app']['base_url'] ?? ''), '/');
-        $suffix = '/' . ltrim((string)$path, '/');
-        header('Location: ' . $base . $suffix);
+        return rtrim((string)($config['app']['base_url'] ?? ''), '/');
+    }
+}
+
+if (!function_exists('url')) {
+    function url($path = ''): string
+    {
+        $path = (string)$path;
+        if ($path !== '' && preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+        $base = app_base_url();
+        if ($path === '' || $path === '/') {
+            return $base;
+        }
+        $basePath = (string)parse_url($base, PHP_URL_PATH);
+        $basePath = rtrim($basePath, '/');
+        $origin = preg_replace('#^(https?://[^/]+).*$#i', '$1', $base);
+        if (str_starts_with($path, '/')) {
+            if ($basePath !== '' && ($path === $basePath || str_starts_with($path, $basePath . '/'))) {
+                return $origin . $path;
+            }
+            return $base . $path;
+        }
+        return $base . '/' . ltrim($path, '/');
+    }
+}
+
+if (!function_exists('redirect')) {
+    function redirect($path): void
+    {
+        header('Location: ' . url((string)$path));
         exit;
     }
 }
