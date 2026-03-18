@@ -46,6 +46,18 @@ class Auth
         return $_SESSION['user_role'] ?? null;
     }
 
+    public static function canAccessAdmin(): bool
+    {
+        if (!self::check()) {
+            return false;
+        }
+        if (!empty($_SESSION['user_is_supervisor'])) {
+            return true;
+        }
+        $role = strtolower(trim((string)(self::role() ?? '')));
+        return in_array($role, ['admin', 'rh', 'viewer'], true);
+    }
+
     public static function requireRole(array $roles): void
     {
         if (!empty($_SESSION['user_is_supervisor'])) {

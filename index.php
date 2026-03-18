@@ -13,10 +13,13 @@ try {
     }
 
     if ($requestPath === '/' || $requestPath === '') {
-        if (!isset($_SESSION['user'])) {
-            redirect('/login');
-        }
-        redirect('/admin');
+        redirect('/login');
+    }
+
+    $isAdminPath = strpos($requestPath, '/admin') === 0;
+    $isAdminAuthRoute = preg_match('#^/admin/(login|logout|forgot-password|reset-password(?:/[^/]+)?)$#', $requestPath) === 1;
+    if ($isAdminPath && !$isAdminAuthRoute && !Auth::check()) {
+        redirect('/login');
     }
 
     $router = new Router($basePath);

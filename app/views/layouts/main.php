@@ -54,7 +54,7 @@
         <img src="<?= $base ?>/assets/logo.png" alt="CT Price" class="h-8 w-auto object-contain">
       </div>
       <nav class="text-sm flex items-center gap-4">
-        <a href="<?= $base ?>/" class="hover:text-ctgreen">Vagas</a>
+        <a href="<?= $base ?>/vagas" class="hover:text-ctgreen">Vagas</a>
         <div class="relative">
           <button
             type="button"

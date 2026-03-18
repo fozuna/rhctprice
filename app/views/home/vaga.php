@@ -1,7 +1,7 @@
 <?php
 ?>
 <div class="bg-white shadow rounded p-6">
-  <a href="<?= $base ?>/" class="text-sm text-ctpblue hover:text-ctgreen">← Voltar</a>
+  <a href="<?= $base ?>/vagas" class="text-sm text-ctpblue hover:text-ctgreen">← Voltar</a>
   <h2 class="mt-2 text-xl font-semibold text-ctpblue"><?= Security::e($vaga['titulo']) ?></h2>
 
   <!-- Área superior dividida em dois containers -->
