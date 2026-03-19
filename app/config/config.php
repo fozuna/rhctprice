@@ -2,6 +2,8 @@
 return [
     'app' => [
         'name' => 'CT Price',
+        'version' => '1.0.0',
+        'release_date' => '',
         'base_url' => '',
         'public_jobs_url' => '',
         'env' => 'auto'
@@ -36,4 +38,3 @@ return [
         'viewer_key' => ''
     ]
 ];
-

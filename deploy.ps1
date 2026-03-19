@@ -11,6 +11,17 @@ Set-Location $repoRoot
 Write-Host "== Empacotamento CTPrice ==" -ForegroundColor Cyan
 Write-Host "Root:" $repoRoot
 
+# 0) Gerar metadados de versão a partir do último commit
+Write-Host "Gerando metadados de versão (git hash/data)..." -ForegroundColor Yellow
+$php = Get-Command php -ErrorAction SilentlyContinue
+if ($null -eq $php) {
+  throw "php não encontrado para gerar app/config/build.php."
+}
+$metaProc = Start-Process -FilePath $php.Source -ArgumentList "scripts/generate_build_info.php" -NoNewWindow -Wait -PassThru
+if ($metaProc.ExitCode -ne 0) {
+  throw "Falha ao gerar metadados de build (ExitCode=$($metaProc.ExitCode))."
+}
+
 # 1) Build CSS do Tailwind (produção)
 if (-not $SkipBuildCss) {
   Write-Host "Compilando Tailwind (npm run build:css)..." -ForegroundColor Yellow

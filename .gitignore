@@ -4,6 +4,8 @@ vendor/
 .env.*
 app/config/local.php
 /app/config/local.php
+app/config/build.php
+/app/config/build.php
 app/config/local.*.php
 storage/sessions/
 storage/ratelimit/

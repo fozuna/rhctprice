@@ -47,6 +47,7 @@ try {
     $router->get('/admin/reset-password/{token}', [PasswordRecoveryController::class, 'resetForm']);
     $router->post('/admin/reset-password/{token}', [PasswordRecoveryController::class, 'performReset']);
     $router->get('/admin', [AdminController::class, 'index']);
+    $router->get('/admin/manual', [AdminManualController::class, 'index']);
     $router->get('/admin/pipeline', [AdminPipelineController::class, 'index']);
 
     $router->get('/admin/vagas', [AdminVagasController::class, 'index']);

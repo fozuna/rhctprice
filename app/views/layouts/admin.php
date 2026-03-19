@@ -21,7 +21,10 @@
 
   <footer class="fixed bottom-0 left-64 right-0 border-t bg-white z-20">
     <div class="px-6 py-3 text-gray-500 text-sm text-center">
-      © <?= date('Y') ?> <?= Config::app()['product_name'] ?? 'TRAXTER RH' ?>. Todos os direitos reservados. • v<?= Config::app()['version'] ?? '' ?>
+      © <?= date("Y"); ?> 
+      <a href="https://traxter.com.br/" target="_blank">
+        <strong>TRAXTER Sistemas e Automações</strong>
+      </a> - Todos os direitos reservados.
     </div>
   </footer>
 </body>

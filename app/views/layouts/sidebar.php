@@ -42,6 +42,10 @@ if ($publicJobsUrl === '') {
           <span>Novo usuário</span>
         </a>
         <?php endif; ?>
+        <a href="<?= $base ?>/admin/manual" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
+          <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 7H20"/><path d="M6.5 7H20v12H6.5A2.5 2.5 0 014 16.5v-12z"/></svg>
+          <span>Manual de Uso</span>
+        </a>
         <a href="<?= $base ?>/admin/logout" class="flex items-center px-3 py-2 rounded hover:bg-red-600 hover:bg-opacity-20 text-red-300 hover:text-red-200 transition-colors">
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="14" height="16" rx="2"/><path d="M12 12h8M16 8l4 4-4 4"/></svg>
           <span>Sair</span>
@@ -58,7 +62,7 @@ if ($publicJobsUrl === '') {
       <?php endif; ?>
     </nav>
     <div class="px-4 py-4 text-xs text-gray-400 border-t border-gray-600 text-center">
-      <span><?= Config::app()['product_name'] ?? 'TRAXTER RH' ?> • v<?= Config::app()['version'] ?? '' ?></span>
+      <span>CT Price - Portal RH</span>
     </div>
   </div>
 </aside>

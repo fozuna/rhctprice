@@ -13,6 +13,8 @@ class Config
         $config = [
             'app' => [
                 'name' => 'CT Price',
+                'version' => '1.0.0',
+                'release_date' => '',
                 'base_url' => '',
                 'public_jobs_url' => '',
                 'env' => 'auto'
@@ -52,6 +54,14 @@ class Config
             }
         }
 
+        $buildPath = __DIR__ . '/../config/build.php';
+        if (is_file($buildPath)) {
+            $build = require $buildPath;
+            if (is_array($build)) {
+                $config = array_replace_recursive($config, $build);
+            }
+        }
+
         $env = self::detectEnv((string)($config['app']['env'] ?? 'auto'));
         $config['app']['env'] = $env;
         $config['app']['base_url'] = self::detectBaseUrl((string)($config['app']['base_url'] ?? ''));
@@ -70,7 +80,8 @@ class Config
         return [
             'name' => $cfg['app']['name'],
             'product_name' => $cfg['app']['name'],
-            'version' => '1.0.0',
+            'version' => (string)($cfg['app']['version'] ?? '1.0.0'),
+            'release_date' => (string)($cfg['app']['release_date'] ?? ''),
             'base_url' => (string)($cfg['app']['base_url'] ?? ''),
             'public_jobs_url' => (string)($cfg['app']['public_jobs_url'] ?? ''),
             'env' => (string)($cfg['app']['env'] ?? 'development'),
