@@ -69,10 +69,13 @@ try {
     $router->post('/admin/beneficios/editar/{id}', [AdminBeneficiosController::class, 'update']);
     $router->post('/admin/beneficios/excluir/{id}', [AdminBeneficiosController::class, 'delete']);
 
+    $router->get('/admin/usuarios', [AdminUsuariosController::class, 'index']);
     $router->get('/admin/usuarios/novo', [AdminUsuariosController::class, 'create']);
+    $router->get('/admin/usuarios/{id}', [AdminUsuariosController::class, 'show']);
     $router->post('/admin/usuarios/novo', [AdminUsuariosController::class, 'store']);
     $router->post('/admin/usuarios/supervisor/garantir', [AdminSupervisorController::class, 'ensure']);
     $router->post('/admin/usuarios/{id}/role', [AdminUsuariosController::class, 'updateRole']);
+    $router->post('/admin/usuarios/{id}/status', [AdminUsuariosController::class, 'updateStatus']);
     $router->post('/admin/usuarios/{id}/excluir', [AdminUsuariosController::class, 'delete']);
 
     $router->dispatch();

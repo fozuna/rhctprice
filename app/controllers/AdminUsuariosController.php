@@ -1,6 +1,27 @@
 <?php
 class AdminUsuariosController extends Controller
 {
+    public function index(): void
+    {
+        Auth::requireRole(['admin']);
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $filters = [
+            'q' => Security::sanitizeString($_GET['q'] ?? ''),
+            'role' => Security::sanitizeString($_GET['role'] ?? ''),
+            'status' => Security::sanitizeString($_GET['status'] ?? '')
+        ];
+        $result = User::paginateForAdmin($filters, $page, 10);
+        $this->view->render('admin/usuarios/index', [
+            'users' => $result['items'],
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'pages' => $result['pages'],
+            'perPage' => $result['per_page'],
+            'filters' => $filters,
+            'csrf' => Security::csrfToken()
+        ], 'layouts/admin');
+    }
+
     public function create(): void
     {
         Auth::requireRole(['admin']);
@@ -64,7 +85,7 @@ class AdminUsuariosController extends Controller
             ], 'layouts/admin');
             return;
         }
-        redirect('/admin');
+        redirect('/admin/usuarios');
     }
 
     public function updateRole(string $id): void
@@ -87,7 +108,7 @@ class AdminUsuariosController extends Controller
             echo 'Operação não permitida.';
             return;
         }
-        redirect('/admin');
+        redirect('/admin/usuarios');
     }
 
     public function delete(string $id): void
@@ -106,6 +127,46 @@ class AdminUsuariosController extends Controller
             echo 'Operação não permitida.';
             return;
         }
-        redirect('/admin');
+        redirect('/admin/usuarios');
+    }
+
+    public function show(string $id): void
+    {
+        Auth::requireRole(['admin']);
+        $user = User::findById((int)$id);
+        if (!$user) {
+            http_response_code(404);
+            echo 'Usuário não encontrado';
+            return;
+        }
+        $this->view->render('admin/usuarios/show', [
+            'user' => $user,
+            'csrf' => Security::csrfToken()
+        ], 'layouts/admin');
+    }
+
+    public function updateStatus(string $id): void
+    {
+        Auth::requireRole(['admin']);
+        if (!Security::csrfCheck($_POST['csrf'] ?? '')) {
+            http_response_code(400);
+            echo 'Falha na verificação de segurança (CSRF).';
+            return;
+        }
+        $active = (string)($_POST['active'] ?? '0') === '1';
+        $target = User::findById((int)$id);
+        if (!$target) {
+            http_response_code(404);
+            echo 'Usuário não encontrado';
+            return;
+        }
+        $actor = User::findById((int)($_SESSION['user_id'] ?? 0));
+        if (!User::canManageUser($actor, $target)) {
+            http_response_code(403);
+            echo 'Operação não permitida.';
+            return;
+        }
+        User::setActiveStatus((int)$id, $active);
+        redirect('/admin/usuarios');
     }
 }

@@ -1,0 +1,140 @@
+<?php
+$queryBase = $base . '/admin/usuarios';
+$q = $filters['q'] ?? '';
+$role = $filters['role'] ?? '';
+$status = $filters['status'] ?? '';
+$params = [];
+if ($q !== '') { $params['q'] = $q; }
+if ($role !== '') { $params['role'] = $role; }
+if ($status !== '') { $params['status'] = $status; }
+?>
+<div class="bg-white shadow rounded p-6">
+  <div class="flex items-center justify-between gap-3 flex-wrap">
+    <h2 class="text-xl font-semibold text-ctpblue">Usuários</h2>
+    <a href="<?= $base ?>/admin/usuarios/novo" class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark">Cadastrar novo usuário</a>
+  </div>
+
+  <form class="mt-4 grid md:grid-cols-4 gap-3" method="get" action="<?= $queryBase ?>">
+    <div class="md:col-span-2">
+      <label class="block text-sm font-medium text-gray-700">Busca</label>
+      <input type="text" name="q" value="<?= Security::e($q) ?>" placeholder="Nome ou e-mail" class="mt-1 w-full border rounded px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Permissão</label>
+      <select name="role" class="mt-1 w-full border rounded px-3 py-2 text-sm">
+        <option value="">Todas</option>
+        <option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>Admin</option>
+        <option value="rh" <?= $role === 'rh' ? 'selected' : '' ?>>RH</option>
+        <option value="viewer" <?= $role === 'viewer' ? 'selected' : '' ?>>Leitor</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Status</label>
+      <select name="status" class="mt-1 w-full border rounded px-3 py-2 text-sm">
+        <option value="">Todos</option>
+        <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Ativo</option>
+        <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>Inativo</option>
+      </select>
+    </div>
+    <div class="md:col-span-4 flex gap-2">
+      <button class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark text-sm">Filtrar</button>
+      <a href="<?= $queryBase ?>" class="px-4 py-2 rounded border text-sm text-gray-600 hover:bg-gray-50">Limpar</a>
+    </div>
+  </form>
+
+  <div class="mt-5 text-sm text-gray-500">Total de usuários: <?= (int)$total ?></div>
+
+  <div class="mt-4 overflow-x-auto hidden md:block">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+      <tr class="border-b">
+        <th class="text-left p-3 font-medium text-gray-500">Nome</th>
+        <th class="text-left p-3 font-medium text-gray-500">E-mail</th>
+        <th class="text-left p-3 font-medium text-gray-500">Cadastro</th>
+        <th class="text-left p-3 font-medium text-gray-500">Status</th>
+        <th class="text-left p-3 font-medium text-gray-500">Permissão</th>
+        <th class="text-left p-3 font-medium text-gray-500">Ações</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+      <?php foreach ($users as $u): ?>
+        <?php $isActive = (int)($u['ativo'] ?? 0) === 1; ?>
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 font-medium text-gray-900"><?= Security::e($u['nome']) ?></td>
+          <td class="p-3 text-gray-700"><?= Security::e($u['email']) ?></td>
+          <td class="p-3 text-gray-500"><?= !empty($u['created_at']) ? date('d/m/Y H:i', strtotime((string)$u['created_at'])) : '-' ?></td>
+          <td class="p-3">
+            <span class="px-2 py-1 rounded text-xs font-semibold text-white <?= $isActive ? 'bg-ctgreen' : 'bg-red-500' ?>">
+              <?= $isActive ? 'Ativo' : 'Inativo' ?>
+            </span>
+          </td>
+          <td class="p-3">
+            <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/role" method="post" class="flex items-center gap-2">
+              <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
+              <select name="role" class="border rounded px-2 py-1 text-sm">
+                <option value="viewer" <?= ($u['role'] ?? '') === 'viewer' ? 'selected' : '' ?>>Leitor</option>
+                <option value="rh" <?= ($u['role'] ?? '') === 'rh' ? 'selected' : '' ?>>RH</option>
+                <option value="admin" <?= ($u['role'] ?? '') === 'admin' ? 'selected' : '' ?>>Admin</option>
+              </select>
+              <button class="text-ctpblue hover:text-ctgreen text-xs font-semibold">Salvar</button>
+            </form>
+          </td>
+          <td class="p-3 space-x-2 whitespace-nowrap">
+            <a href="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>" class="text-blue-600 hover:text-blue-900 font-medium">Visualizar</a>
+            <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/status" method="post" class="inline">
+              <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
+              <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
+              <button class="text-orange-600 hover:text-orange-800 font-medium"><?= $isActive ? 'Desativar' : 'Ativar' ?></button>
+            </form>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      <?php if (empty($users)): ?>
+        <tr>
+          <td colspan="6" class="p-6 text-center text-gray-500">Nenhum usuário encontrado.</td>
+        </tr>
+      <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 grid gap-3 md:hidden">
+    <?php foreach ($users as $u): ?>
+      <?php $isActive = (int)($u['ativo'] ?? 0) === 1; ?>
+      <div class="border rounded p-4 bg-gray-50">
+        <div class="font-semibold text-ctpblue"><?= Security::e($u['nome']) ?></div>
+        <div class="text-sm text-gray-600"><?= Security::e($u['email']) ?></div>
+        <div class="mt-2 text-xs text-gray-500">Cadastro: <?= !empty($u['created_at']) ? date('d/m/Y H:i', strtotime((string)$u['created_at'])) : '-' ?></div>
+        <div class="mt-2">
+          <span class="px-2 py-1 rounded text-xs font-semibold text-white <?= $isActive ? 'bg-ctgreen' : 'bg-red-500' ?>">
+            <?= $isActive ? 'Ativo' : 'Inativo' ?>
+          </span>
+        </div>
+        <div class="mt-3 flex gap-3 text-sm">
+          <a href="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>" class="text-blue-600 hover:text-blue-900 font-medium">Visualizar</a>
+          <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/status" method="post">
+            <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
+            <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
+            <button class="text-orange-600 hover:text-orange-800 font-medium"><?= $isActive ? 'Desativar' : 'Ativar' ?></button>
+          </form>
+        </div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+
+  <?php if (($pages ?? 1) > 1): ?>
+    <div class="mt-6 flex items-center justify-between text-sm">
+      <div class="text-gray-500">Página <?= (int)$page ?> de <?= (int)$pages ?></div>
+      <div class="flex gap-2">
+        <?php
+        $prev = max(1, (int)$page - 1);
+        $next = min((int)$pages, (int)$page + 1);
+        $prevParams = array_merge($params, ['page' => $prev]);
+        $nextParams = array_merge($params, ['page' => $next]);
+        ?>
+        <a href="<?= $queryBase . '?' . http_build_query($prevParams) ?>" class="px-3 py-1 border rounded <?= (int)$page <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-50' ?>">Anterior</a>
+        <a href="<?= $queryBase . '?' . http_build_query($nextParams) ?>" class="px-3 py-1 border rounded <?= (int)$page >= (int)$pages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-50' ?>">Próxima</a>
+      </div>
+    </div>
+  <?php endif; ?>
+</div>

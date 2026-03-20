@@ -63,11 +63,82 @@ class User
         return $data ? self::map($data) : null;
     }
 
+    public static function paginateForAdmin(array $filters = [], int $page = 1, int $perPage = 10): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min(100, $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        $where = [];
+        $params = [];
+
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(u.nome LIKE ? OR u.email LIKE ?)';
+            $like = '%' . $q . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $role = strtolower(trim((string)($filters['role'] ?? '')));
+        if (in_array($role, ['admin', 'rh', 'viewer'], true)) {
+            $where[] = 'u.role = ?';
+            $params[] = $role;
+        }
+
+        $status = strtolower(trim((string)($filters['status'] ?? '')));
+        if ($status === 'active') {
+            $where[] = 'u.email_verified_at IS NOT NULL';
+        } elseif ($status === 'inactive') {
+            $where[] = 'u.email_verified_at IS NULL';
+        }
+
+        $whereSql = $where ? (' WHERE ' . implode(' AND ', $where)) : '';
+
+        $countSql = 'SELECT COUNT(*) FROM usuarios u' . $whereSql;
+        $countStmt = Database::conn()->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+        $pages = max(1, (int)ceil($total / $perPage));
+        if ($page > $pages) {
+            $page = $pages;
+            $offset = ($page - 1) * $perPage;
+        }
+
+        $sql = 'SELECT u.*, CASE WHEN u.email_verified_at IS NULL THEN 0 ELSE 1 END AS ativo FROM usuarios u'
+            . $whereSql
+            . ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
+        $stmt = Database::conn()->prepare($sql);
+        $queryParams = $params;
+        $queryParams[] = $perPage;
+        $queryParams[] = $offset;
+        $stmt->execute($queryParams);
+
+        return [
+            'items' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'pages' => $pages
+        ];
+    }
+
     public static function updatePassword(int $id, string $passwordHash): bool
     {
         $sql = 'UPDATE usuarios SET senha_hash = ?, last_password_reset_at = NOW() WHERE id = ?';
         $stmt = Database::conn()->prepare($sql);
         return $stmt->execute([$passwordHash, $id]);
+    }
+
+    public static function setActiveStatus(int $id, bool $active): bool
+    {
+        if ($active) {
+            $sql = 'UPDATE usuarios SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ?';
+        } else {
+            $sql = 'UPDATE usuarios SET email_verified_at = NULL WHERE id = ?';
+        }
+        $stmt = Database::conn()->prepare($sql);
+        return $stmt->execute([$id]);
     }
 
     public static function isProtectedSupervisor(self $user): bool

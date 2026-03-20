@@ -37,9 +37,9 @@ if ($publicJobsUrl === '') {
           <span>Benefícios</span>
         </a>
         <?php if (Auth::role() === 'admin'): ?>
-        <a href="<?= $base ?>/admin/usuarios/novo" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
+        <a href="<?= $base ?>/admin/usuarios" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-          <span>Novo usuário</span>
+          <span>Usuários</span>
         </a>
         <?php endif; ?>
         <a href="<?= $base ?>/admin/manual" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
