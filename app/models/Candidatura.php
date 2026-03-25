@@ -5,17 +5,28 @@ class Candidatura
     {
         self::ensureCpfColumn();
         self::ensureStageColumn();
-        $sql = 'INSERT INTO candidaturas (vaga_id, nome, email, telefone, cpf, cargo_pretendido, experiencia, pdf_path, status) VALUES (?,?,?,?,?,?,?,?,?)';
-        $stmt = Database::conn()->prepare($sql);
-        $stmt->execute([
-            (int)$data['vaga_id'], $data['nome'], $data['email'], $data['telefone'], $data['cpf'], $data['cargo_pretendido'], $data['experiencia'], $data['pdf_path'], $data['status'] ?? 'novo'
-        ]);
+        self::ensureIndicacaoColumns();
+        $hasNomeIndicador = self::hasColumn('candidaturas', 'indicacao_colaborador_nome');
+        if ($hasNomeIndicador) {
+            $sql = 'INSERT INTO candidaturas (vaga_id, nome, email, telefone, cpf, cargo_pretendido, experiencia, pdf_path, status, indicacao_colaborador, indicacao_colaborador_nome) VALUES (?,?,?,?,?,?,?,?,?,?,?)';
+            $stmt = Database::conn()->prepare($sql);
+            $stmt->execute([
+                (int)$data['vaga_id'], $data['nome'], $data['email'], $data['telefone'], $data['cpf'], $data['cargo_pretendido'], $data['experiencia'], $data['pdf_path'], $data['status'] ?? 'novo', (int)($data['indicacao_colaborador'] ?? 0), (string)($data['indicacao_colaborador_nome'] ?? '')
+            ]);
+        } else {
+            $sql = 'INSERT INTO candidaturas (vaga_id, nome, email, telefone, cpf, cargo_pretendido, experiencia, pdf_path, status, indicacao_colaborador) VALUES (?,?,?,?,?,?,?,?,?,?)';
+            $stmt = Database::conn()->prepare($sql);
+            $stmt->execute([
+                (int)$data['vaga_id'], $data['nome'], $data['email'], $data['telefone'], $data['cpf'], $data['cargo_pretendido'], $data['experiencia'], $data['pdf_path'], $data['status'] ?? 'novo', (int)($data['indicacao_colaborador'] ?? 0)
+            ]);
+        }
         return (int)Database::conn()->lastInsertId();
     }
 
     public static function all(array $filters = []): array
     {
         self::ensureStageColumn();
+        self::ensureIndicacaoColumns();
         $sql = 'SELECT c.*, v.titulo AS vaga_titulo, s.nome as stage_nome, s.cor as stage_cor 
                 FROM candidaturas c 
                 LEFT JOIN vagas v ON v.id = c.vaga_id 
@@ -36,6 +47,7 @@ class Candidatura
     public static function find(int $id): ?array
     {
         self::ensureStageColumn();
+        self::ensureIndicacaoColumns();
         $sql = 'SELECT c.*, v.titulo AS vaga_titulo, s.nome as stage_nome, s.cor as stage_cor 
                 FROM candidaturas c 
                 LEFT JOIN vagas v ON v.id = c.vaga_id 
@@ -50,6 +62,7 @@ class Candidatura
     public static function updateStage(int $id, int $newStageId, int $userId): bool
     {
         self::ensureStageColumn();
+        self::ensureIndicacaoColumns();
         $candidatura = self::find($id);
         if (!$candidatura) return false;
 
@@ -74,6 +87,17 @@ class Candidatura
             $stmt = $pdo->prepare('SELECT nome FROM pipeline_stages WHERE id = ?');
             $stmt->execute([$newStageId]);
             $newStageName = $stmt->fetchColumn() ?: 'Desconhecido';
+
+            $normalized = function (string $value): string {
+                $clean = trim(mb_strtolower($value, 'UTF-8'));
+                $replace = ['á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'í' => 'i', 'ì' => 'i', 'î' => 'i', 'ï' => 'i', 'ó' => 'o', 'ò' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ç' => 'c'];
+                return strtr($clean, $replace);
+            };
+            $isContratado = $normalized((string)$newStageName) === 'contratado';
+            if ($isContratado && (int)($candidatura['indicacao_colaborador'] ?? 0) === 1) {
+                $stmt = $pdo->prepare('UPDATE candidaturas SET indicacao_data_contratacao = COALESCE(indicacao_data_contratacao, NOW()), indicacao_data_fim_experiencia = COALESCE(indicacao_data_fim_experiencia, DATE_ADD(CURDATE(), INTERVAL 90 DAY)) WHERE id = ?');
+                $stmt->execute([$id]);
+            }
             
             self::addHistorico($id, $oldStageName, $newStageName, "Mudança de etapa via Pipeline", $userId);
 
@@ -242,5 +266,336 @@ class Candidatura
         $stmt->execute([$cpf]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int)($result['count'] ?? 0) > 0;
+    }
+
+    public static function updateIndicacaoColaborador(int $id, bool $indicado, ?string $colaboradorNome = null): bool
+    {
+        self::ensureIndicacaoColumns();
+        $candidatura = self::find($id);
+        if (!$candidatura) {
+            return false;
+        }
+        $pdo = Database::conn();
+        $hasNomeIndicador = self::hasColumn('candidaturas', 'indicacao_colaborador_nome');
+        if (!$indicado) {
+            if ($hasNomeIndicador) {
+                $sql = 'UPDATE candidaturas SET indicacao_colaborador = 0, indicacao_colaborador_nome = NULL, indicacao_data_contratacao = NULL, indicacao_data_fim_experiencia = NULL, indicacao_pagamento_realizado = 0, indicacao_data_pagamento = NULL WHERE id = ?';
+            } else {
+                $sql = 'UPDATE candidaturas SET indicacao_colaborador = 0, indicacao_data_contratacao = NULL, indicacao_data_fim_experiencia = NULL, indicacao_pagamento_realizado = 0, indicacao_data_pagamento = NULL WHERE id = ?';
+            }
+            $stmt = $pdo->prepare($sql);
+            return $stmt->execute([$id]);
+        }
+        $nome = trim((string)$colaboradorNome);
+        $nomeAnterior = trim((string)($candidatura['indicacao_colaborador_nome'] ?? ''));
+        if ($nome === '') {
+            $nome = $nomeAnterior !== '' ? $nomeAnterior : 'Não informado';
+        }
+        if ($hasNomeIndicador) {
+            $sql = 'UPDATE candidaturas SET indicacao_colaborador = 1, indicacao_colaborador_nome = ? WHERE id = ?';
+            $stmt = $pdo->prepare($sql);
+            $ok = $stmt->execute([$nome, $id]);
+        } else {
+            $sql = 'UPDATE candidaturas SET indicacao_colaborador = 1 WHERE id = ?';
+            $stmt = $pdo->prepare($sql);
+            $ok = $stmt->execute([$id]);
+        }
+        if (!$ok) {
+            return false;
+        }
+        $stageName = (string)($candidatura['stage_nome'] ?? '');
+        $normalized = trim(mb_strtolower($stageName, 'UTF-8'));
+        $normalized = strtr($normalized, ['á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'í' => 'i', 'ì' => 'i', 'î' => 'i', 'ï' => 'i', 'ó' => 'o', 'ò' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ç' => 'c']);
+        if ($normalized === 'contratado') {
+            $stmt = $pdo->prepare('UPDATE candidaturas SET indicacao_data_contratacao = COALESCE(indicacao_data_contratacao, NOW()), indicacao_data_fim_experiencia = COALESCE(indicacao_data_fim_experiencia, DATE_ADD(CURDATE(), INTERVAL 90 DAY)) WHERE id = ?');
+            $stmt->execute([$id]);
+        }
+        return true;
+    }
+
+    public static function markIndicacaoPagamento(int $id, string $paymentDateBr, ?int $actorUserId = null): array
+    {
+        self::ensureIndicacaoColumns();
+        self::ensureIndicacaoPaymentAuditTable();
+        $cand = self::find($id);
+        if (!$cand || (int)($cand['indicacao_colaborador'] ?? 0) !== 1) {
+            return ['ok' => false, 'error' => 'Candidatura indicada não encontrada.'];
+        }
+        $iso = self::parseBrDate($paymentDateBr);
+        if ($iso === null) {
+            return ['ok' => false, 'error' => 'Data de pagamento inválida.'];
+        }
+        $today = date('Y-m-d');
+        if ($iso > $today) {
+            return ['ok' => false, 'error' => 'A data de pagamento não pode ser futura.'];
+        }
+        if ($iso < date('Y-m-d', strtotime('-90 days'))) {
+            return ['ok' => false, 'error' => 'A data de pagamento não pode ser superior a 90 dias no passado.'];
+        }
+        if (!empty($cand['indicacao_data_contratacao'])) {
+            $admissao = date('Y-m-d', strtotime((string)$cand['indicacao_data_contratacao']));
+            if ($iso < $admissao) {
+                return ['ok' => false, 'error' => 'A data de pagamento não pode ser anterior à data de contratação.'];
+            }
+        }
+        $sql = 'UPDATE candidaturas SET indicacao_pagamento_realizado = 1, indicacao_data_pagamento = ?, indicacao_pagamento_registrado_em = NOW() WHERE id = ? AND indicacao_colaborador = 1 AND indicacao_pagamento_realizado = 0';
+        $stmt = Database::conn()->prepare($sql);
+        $stmt->execute([$iso, $id]);
+        if ($stmt->rowCount() < 1) {
+            return ['ok' => false, 'error' => 'Pagamento já registrado por outro usuário.'];
+        }
+        self::addIndicacaoPaymentAudit($id, null, $iso, 'Registro inicial do pagamento', $actorUserId);
+        return ['ok' => true];
+    }
+
+    public static function updateIndicacaoPaymentDate(int $id, string $newDateBr, string $reason, int $actorUserId): array
+    {
+        self::ensureIndicacaoColumns();
+        self::ensureIndicacaoPaymentAuditTable();
+        $cand = self::find($id);
+        if (!$cand || (int)($cand['indicacao_colaborador'] ?? 0) !== 1) {
+            return ['ok' => false, 'error' => 'Candidatura indicada não encontrada.'];
+        }
+        if ((int)($cand['indicacao_pagamento_realizado'] ?? 0) !== 1 || empty($cand['indicacao_data_pagamento'])) {
+            return ['ok' => false, 'error' => 'Não há pagamento registrado para edição.'];
+        }
+        $reasonSanitized = trim(Security::sanitizeString($reason));
+        if ($reasonSanitized === '') {
+            return ['ok' => false, 'error' => 'Informe o motivo da alteração da data.'];
+        }
+        $iso = self::parseBrDate($newDateBr);
+        if ($iso === null) {
+            return ['ok' => false, 'error' => 'Data de pagamento inválida.'];
+        }
+        $validation = self::validatePaymentDate($iso, $cand);
+        if (!$validation['ok']) {
+            return $validation;
+        }
+        $oldDate = (string)($cand['indicacao_data_pagamento'] ?? '');
+        if ($oldDate === $iso) {
+            return ['ok' => false, 'error' => 'A nova data é igual à data atual.'];
+        }
+        $sql = 'UPDATE candidaturas SET indicacao_data_pagamento = ?, indicacao_pagamento_registrado_em = NOW(), indicacao_pagamento_realizado = 1 WHERE id = ? AND indicacao_colaborador = 1 AND indicacao_data_pagamento = ?';
+        $stmt = Database::conn()->prepare($sql);
+        $stmt->execute([$iso, $id, $oldDate]);
+        if ($stmt->rowCount() < 1) {
+            return ['ok' => false, 'error' => 'Data já alterada por outro usuário. Recarregue a página e tente novamente.'];
+        }
+        self::addIndicacaoPaymentAudit($id, $oldDate, $iso, $reasonSanitized, $actorUserId);
+        return ['ok' => true, 'old_date' => $oldDate, 'new_date' => $iso];
+    }
+
+    public static function paginateIndicacoes(array $filters = [], int $page = 1, int $perPage = 15): array
+    {
+        self::ensureStageColumn();
+        self::ensureIndicacaoColumns();
+        $page = max(1, $page);
+        $perPage = max(1, min(100, $perPage));
+        $offset = ($page - 1) * $perPage;
+        $where = ['c.indicacao_colaborador = 1'];
+        $params = [];
+
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(c.nome LIKE ? OR v.titulo LIKE ?)';
+            $like = '%' . $q . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $payment = trim((string)($filters['pagamento'] ?? ''));
+        if ($payment === 'pendente') {
+            $where[] = 'c.indicacao_pagamento_realizado = 0';
+        } elseif ($payment === 'pago') {
+            $where[] = 'c.indicacao_pagamento_realizado = 1';
+        }
+
+        $exp = trim((string)($filters['experiencia'] ?? ''));
+        if ($exp === 'em_experiencia') {
+            $where[] = 'c.indicacao_data_contratacao IS NOT NULL AND CURDATE() <= c.indicacao_data_fim_experiencia';
+        } elseif ($exp === 'concluida') {
+            $where[] = 'c.indicacao_data_contratacao IS NOT NULL AND CURDATE() > c.indicacao_data_fim_experiencia';
+        } elseif ($exp === 'nao_contratado') {
+            $where[] = 'c.indicacao_data_contratacao IS NULL';
+        }
+
+        $whereSql = ' WHERE ' . implode(' AND ', $where);
+        $countSql = 'SELECT COUNT(*) FROM candidaturas c LEFT JOIN vagas v ON v.id = c.vaga_id LEFT JOIN pipeline_stages s ON s.id = c.stage_id' . $whereSql;
+        $countStmt = Database::conn()->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+        $pages = max(1, (int)ceil($total / $perPage));
+        if ($page > $pages) {
+            $page = $pages;
+            $offset = ($page - 1) * $perPage;
+        }
+
+        $sql = 'SELECT c.*, v.titulo AS vaga_titulo, s.nome AS stage_nome, s.cor AS stage_cor, CASE WHEN c.indicacao_data_contratacao IS NOT NULL THEN DATEDIFF(CURDATE(), DATE(c.indicacao_data_contratacao)) ELSE NULL END AS dias_desde_contratacao FROM candidaturas c LEFT JOIN vagas v ON v.id = c.vaga_id LEFT JOIN pipeline_stages s ON s.id = c.stage_id'
+            . $whereSql
+            . ' ORDER BY c.created_at DESC LIMIT ? OFFSET ?';
+        $stmt = Database::conn()->prepare($sql);
+        $queryParams = $params;
+        $queryParams[] = $perPage;
+        $queryParams[] = $offset;
+        $stmt->execute($queryParams);
+        return [
+            'items' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'pages' => $pages
+        ];
+    }
+
+    public static function financialIndicacoesDataset(array $filters = []): array
+    {
+        self::ensureStageColumn();
+        self::ensureIndicacaoColumns();
+        $where = ['c.indicacao_colaborador = 1'];
+        $params = [];
+        $payment = trim((string)($filters['pagamento'] ?? ''));
+        if ($payment === 'pendente') {
+            $where[] = 'c.indicacao_pagamento_realizado = 0';
+        } elseif ($payment === 'pago') {
+            $where[] = 'c.indicacao_pagamento_realizado = 1';
+        }
+        $whereSql = ' WHERE ' . implode(' AND ', $where);
+        $sql = 'SELECT c.id, c.nome, c.indicacao_colaborador_nome, c.indicacao_pagamento_realizado, c.indicacao_data_pagamento, c.indicacao_pagamento_registrado_em, c.indicacao_data_contratacao, c.indicacao_data_fim_experiencia, v.titulo AS vaga_titulo FROM candidaturas c LEFT JOIN vagas v ON v.id = c.vaga_id' . $whereSql . ' ORDER BY c.created_at DESC';
+        $stmt = Database::conn()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private static function ensureIndicacaoColumns(): void
+    {
+        try {
+            $db = Database::conn();
+            $columns = [
+                'indicacao_colaborador' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_colaborador TINYINT(1) NOT NULL DEFAULT 0',
+                'indicacao_colaborador_nome' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_colaborador_nome VARCHAR(120) NULL',
+                'indicacao_data_contratacao' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_data_contratacao DATETIME NULL',
+                'indicacao_data_fim_experiencia' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_data_fim_experiencia DATE NULL',
+                'indicacao_pagamento_realizado' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_pagamento_realizado TINYINT(1) NOT NULL DEFAULT 0',
+                'indicacao_data_pagamento' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_data_pagamento DATE NULL',
+                'indicacao_pagamento_registrado_em' => 'ALTER TABLE candidaturas ADD COLUMN indicacao_pagamento_registrado_em DATETIME NULL'
+            ];
+            foreach ($columns as $column => $ddl) {
+                $check = $db->prepare('SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+                $check->execute(['candidaturas', $column]);
+                $exists = (int)($check->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0;
+                if (!$exists) {
+                    $db->exec($ddl);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
+    private static function ensureIndicacaoPaymentAuditTable(): void
+    {
+        try {
+            $db = Database::conn();
+            $check = $db->prepare('SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
+            $check->execute(['indicacao_pagamento_auditoria']);
+            $exists = (int)($check->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0;
+            if (!$exists) {
+                $db->exec('CREATE TABLE indicacao_pagamento_auditoria (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    candidatura_id INT NOT NULL,
+                    data_anterior DATE NULL,
+                    data_nova DATE NOT NULL,
+                    motivo VARCHAR(255) NOT NULL,
+                    usuario_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT fk_ind_pag_cand FOREIGN KEY (candidatura_id) REFERENCES candidaturas(id) ON DELETE CASCADE,
+                    CONSTRAINT fk_ind_pag_user FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
+    public static function paymentSignal(array $cand, ?DateTimeImmutable $today = null): array
+    {
+        $todayObj = $today ?? new DateTimeImmutable('today');
+        $pago = (int)($cand['indicacao_pagamento_realizado'] ?? 0) === 1;
+        if ($pago) {
+            return ['color' => 'blue', 'label' => 'Pago', 'dot' => 'bg-blue-500', 'text' => 'text-blue-700'];
+        }
+        $fimExpRaw = trim((string)($cand['indicacao_data_fim_experiencia'] ?? ''));
+        if ($fimExpRaw === '') {
+            return ['color' => 'green', 'label' => 'Pendente', 'dot' => 'bg-green-500', 'text' => 'text-green-700'];
+        }
+        $fimExp = DateTimeImmutable::createFromFormat('Y-m-d', $fimExpRaw);
+        if (!$fimExp) {
+            return ['color' => 'green', 'label' => 'Pendente', 'dot' => 'bg-green-500', 'text' => 'text-green-700'];
+        }
+        if ($todayObj <= $fimExp) {
+            return ['color' => 'green', 'label' => 'Pendente', 'dot' => 'bg-green-500', 'text' => 'text-green-700'];
+        }
+        $diasApos = (int)$fimExp->diff($todayObj)->days;
+        if ($diasApos <= 3) {
+            return ['color' => 'red', 'label' => 'Pendente', 'dot' => 'bg-red-500', 'text' => 'text-red-700'];
+        }
+        if ($diasApos <= 7) {
+            return ['color' => 'yellow', 'label' => 'Pendente', 'dot' => 'bg-yellow-400', 'text' => 'text-yellow-700'];
+        }
+        return ['color' => 'green', 'label' => 'Pendente', 'dot' => 'bg-green-500', 'text' => 'text-green-700'];
+    }
+
+    private static function parseBrDate(string $value): ?string
+    {
+        $raw = trim($value);
+        if (!preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $raw)) {
+            return null;
+        }
+        [$d, $m, $y] = explode('/', $raw);
+        if (!checkdate((int)$m, (int)$d, (int)$y)) {
+            return null;
+        }
+        return sprintf('%04d-%02d-%02d', (int)$y, (int)$m, (int)$d);
+    }
+
+    private static function validatePaymentDate(string $isoDate, array $cand): array
+    {
+        $today = date('Y-m-d');
+        if ($isoDate > $today) {
+            return ['ok' => false, 'error' => 'A data de pagamento não pode ser futura.'];
+        }
+        if ($isoDate < date('Y-m-d', strtotime('-90 days'))) {
+            return ['ok' => false, 'error' => 'A data de pagamento não pode ser superior a 90 dias no passado.'];
+        }
+        if (!empty($cand['indicacao_data_contratacao'])) {
+            $admissao = date('Y-m-d', strtotime((string)$cand['indicacao_data_contratacao']));
+            if ($isoDate < $admissao) {
+                return ['ok' => false, 'error' => 'A data de pagamento não pode ser anterior à data de contratação.'];
+            }
+        }
+        return ['ok' => true];
+    }
+
+    private static function addIndicacaoPaymentAudit(int $candidaturaId, ?string $oldDate, string $newDate, string $reason, ?int $actorUserId): void
+    {
+        if (($actorUserId ?? 0) <= 0) {
+            return;
+        }
+        try {
+            $sql = 'INSERT INTO indicacao_pagamento_auditoria (candidatura_id, data_anterior, data_nova, motivo, usuario_id) VALUES (?, ?, ?, ?, ?)';
+            $stmt = Database::conn()->prepare($sql);
+            $stmt->execute([$candidaturaId, $oldDate !== '' ? $oldDate : null, $newDate, $reason, $actorUserId]);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    private static function hasColumn(string $table, string $column): bool
+    {
+        try {
+            $db = Database::conn();
+            $check = $db->prepare('SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+            $check->execute([$table, $column]);
+            return (int)($check->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

@@ -80,7 +80,15 @@
               </select>
             </div>
             <div>
-                <!-- Manter status legado oculto ou sincronizado se necessário, mas aqui focamos no stage -->
+              <label class="block text-sm font-medium text-gray-700">Programa de Indicações</label>
+              <label class="mt-2 inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name="indicacao_colaborador" value="1" <?= (int)($c['indicacao_colaborador'] ?? 0) === 1 ? 'checked' : '' ?> class="rounded border-gray-300 text-ctgreen focus:ring-ctgreen" id="indicacao-colaborador-check">
+                Candidato indicado por colaborador
+              </label>
+              <div class="mt-2 <?= (int)($c['indicacao_colaborador'] ?? 0) === 1 ? '' : 'hidden' ?>" id="indicacao-colaborador-box">
+                <label class="block text-xs font-medium text-gray-600">Nome do colaborador que indicou</label>
+                <input type="text" name="indicacao_colaborador_nome" value="<?= Security::e($c['indicacao_colaborador_nome'] ?? '') ?>" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="Ex.: João da Silva">
+              </div>
             </div>
         </div>
         <div>
@@ -93,6 +101,24 @@
         </div>
       </form>
   </div>
+  <script>
+    (() => {
+      const check = document.getElementById('indicacao-colaborador-check');
+      const box = document.getElementById('indicacao-colaborador-box');
+      if (!check || !box) return;
+      const sync = () => {
+        if (check.checked) {
+          box.classList.remove('hidden');
+        } else {
+          box.classList.add('hidden');
+          const input = box.querySelector('input[name="indicacao_colaborador_nome"]');
+          if (input) input.value = '';
+        }
+      };
+      check.addEventListener('change', sync);
+      sync();
+    })();
+  </script>
 
   <!-- Histórico -->
   <?php if (!empty($historico)): ?>

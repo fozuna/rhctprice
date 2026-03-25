@@ -28,6 +28,10 @@ if ($publicJobsUrl === '') {
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="12" r="3"/></svg>
           <span>Candidaturas</span>
         </a>
+        <a href="<?= $base ?>/admin/indicacoes" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
+          <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l3.1 6.3 7 .9-5 4.8 1.2 6.9L12 18.6 5.7 22l1.2-6.9-5-4.8 7-.9L12 3z"/></svg>
+          <span>Programa de Indicações</span>
+        </a>
         <a href="<?= $base ?>/admin/pipeline" class="flex items-center px-3 py-2 rounded hover:bg-[#10E36B] hover:bg-opacity-50 text-gray-200 hover:text-white transition-colors">
           <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
           <span>Pipeline Kanban</span>

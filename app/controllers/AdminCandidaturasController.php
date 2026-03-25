@@ -18,6 +18,7 @@ class AdminCandidaturasController extends Controller
             'vagas' => $vagas,
             'stages' => $stages,
             'filters' => $filters,
+            'csrf' => Security::csrfToken(),
         ], 'layouts/admin');
     }
 
@@ -116,9 +117,17 @@ class AdminCandidaturasController extends Controller
         
         $stageId = (int)($_POST['stage_id'] ?? 0);
         $observacoes = Security::sanitizeString($_POST['observacoes'] ?? '');
+        $indicacaoColaborador = isset($_POST['indicacao_colaborador']) && (string)$_POST['indicacao_colaborador'] === '1';
+        $indicacaoNomeColaborador = Security::sanitizeString($_POST['indicacao_colaborador_nome'] ?? '');
         $usuarioId = $_SESSION['user_id'] ?? null;
         
         try {
+            $indicacaoUpdated = Candidatura::updateIndicacaoColaborador((int)$id, $indicacaoColaborador, $indicacaoNomeColaborador);
+            if (!$indicacaoUpdated) {
+                http_response_code(422);
+                echo 'Informe o nome do colaborador que realizou a indicação.';
+                return;
+            }
             if ($stageId > 0) {
                 $stageUpdated = Candidatura::updateStage((int)$id, $stageId, $usuarioId);
                 if (!$stageUpdated) {
@@ -143,5 +152,24 @@ class AdminCandidaturasController extends Controller
 
         // Redireciona usando base_url da aplicação
         redirect('/admin/candidaturas/' . (int)$id);
+    }
+
+    public function updateIndicacao(string $id): void
+    {
+        Auth::requireRole(['admin', 'rh']);
+        if (!Security::csrfCheck($_POST['csrf'] ?? '')) {
+            http_response_code(400);
+            echo 'Falha na verificação de segurança (CSRF).';
+            return;
+        }
+        $checked = isset($_POST['indicacao_colaborador']) && (string)$_POST['indicacao_colaborador'] === '1';
+        $indicacaoNomeColaborador = Security::sanitizeString($_POST['indicacao_colaborador_nome'] ?? '');
+        $ok = Candidatura::updateIndicacaoColaborador((int)$id, $checked, $indicacaoNomeColaborador);
+        if (!$ok) {
+            http_response_code(422);
+            echo 'Informe o nome do colaborador que realizou a indicação.';
+            return;
+        }
+        redirect('/admin/candidaturas');
     }
 }

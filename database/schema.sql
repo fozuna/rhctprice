@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS candidaturas (
   experiencia TEXT NOT NULL,
   pdf_path VARCHAR(255) NOT NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'novo',
+  indicacao_colaborador TINYINT(1) NOT NULL DEFAULT 0,
+  indicacao_colaborador_nome VARCHAR(120) DEFAULT NULL,
+  indicacao_data_contratacao DATETIME DEFAULT NULL,
+  indicacao_data_fim_experiencia DATE DEFAULT NULL,
+  indicacao_pagamento_realizado TINYINT(1) NOT NULL DEFAULT 0,
+  indicacao_data_pagamento DATE DEFAULT NULL,
+  indicacao_pagamento_registrado_em DATETIME DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_cand_vaga FOREIGN KEY (vaga_id) REFERENCES vagas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -48,6 +55,18 @@ CREATE TABLE IF NOT EXISTS candidatura_historico (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_hist_candidatura FOREIGN KEY (candidatura_id) REFERENCES candidaturas(id) ON DELETE CASCADE,
   CONSTRAINT fk_hist_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS indicacao_pagamento_auditoria (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  candidatura_id INT NOT NULL,
+  data_anterior DATE DEFAULT NULL,
+  data_nova DATE NOT NULL,
+  motivo VARCHAR(255) NOT NULL,
+  usuario_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_ind_pag_cand FOREIGN KEY (candidatura_id) REFERENCES candidaturas(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ind_pag_user FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS password_resets (

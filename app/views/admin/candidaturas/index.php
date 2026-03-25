@@ -52,6 +52,7 @@
           <th class="text-left p-3 font-medium text-gray-500">Etapa</th>
           <th class="text-left p-3 font-medium text-gray-500">Data</th>
           <th class="text-left p-3 font-medium text-gray-500">Ações</th>
+          <th class="text-left p-3 font-medium text-gray-500">Indicação</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200">
@@ -76,14 +77,110 @@
               <a href="<?= $base ?>/admin/candidaturas/<?= (int)$c['id'] ?>" class="text-blue-600 hover:text-blue-900 font-medium">Detalhes</a>
               <a href="<?= $base ?>/admin/candidaturas/<?= (int)$c['id'] ?>/download" class="text-gray-600 hover:text-gray-900">PDF</a>
             </td>
+            <td class="p-3">
+              <?php $canToggleIndicacao = in_array((string)Auth::role(), ['admin', 'rh'], true); ?>
+              <form action="<?= $base ?>/admin/candidaturas/<?= (int)$c['id'] ?>/indicacao" method="post" class="flex items-center justify-center gap-2" data-indicacao-form="<?= (int)$c['id'] ?>">
+                <input type="hidden" name="csrf" value="<?= Security::e($csrf ?? '') ?>">
+                <input type="hidden" name="indicacao_colaborador" value="0">
+                <input type="hidden" name="indicacao_colaborador_nome" value="<?= Security::e($c['indicacao_colaborador_nome'] ?? '') ?>" data-indicacao-nome-hidden="<?= (int)$c['id'] ?>">
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-gray-600">
+                  <input type="checkbox" name="indicacao_colaborador" value="1" <?= (int)($c['indicacao_colaborador'] ?? 0) === 1 ? 'checked' : '' ?> <?= $canToggleIndicacao ? '' : 'disabled' ?> class="rounded border-gray-300 text-ctgreen focus:ring-ctgreen h-4 w-4" data-indicacao-check="<?= (int)$c['id'] ?>">
+                  <span><?= (int)($c['indicacao_colaborador'] ?? 0) === 1 ? 'Indic.' : 'Não' ?></span>
+                </label>
+              </form>
+              <?php if ((int)($c['indicacao_colaborador'] ?? 0) === 1 && !empty($c['indicacao_colaborador_nome'])): ?>
+                <div class="text-xs text-gray-500 mt-1 text-center truncate max-w-[180px]" title="<?= Security::e($c['indicacao_colaborador_nome']) ?>">
+                  <?= Security::e($c['indicacao_colaborador_nome']) ?>
+                </div>
+              <?php endif; ?>
+            </td>
           </tr>
         <?php endforeach; ?>
         <?php if (empty($candidaturas)): ?>
             <tr>
-                <td colspan="8" class="p-6 text-center text-gray-500">Nenhuma candidatura encontrada.</td>
+                <td colspan="9" class="p-6 text-center text-gray-500">Nenhuma candidatura encontrada.</td>
             </tr>
         <?php endif; ?>
       </tbody>
     </table>
   </div>
 </div>
+<div id="indicacao-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-5">
+    <h3 class="text-lg font-semibold text-ctpblue">Registrar indicação</h3>
+    <p class="text-sm text-gray-600 mt-1">Informe o nome do colaborador que indicou o candidato.</p>
+    <div class="mt-3">
+      <label class="block text-sm font-medium text-gray-700">Nome do colaborador</label>
+      <input id="indicacao-colaborador-input" type="text" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="Ex.: João da Silva">
+      <p id="indicacao-colaborador-erro" class="text-red-600 text-xs mt-1 hidden">Informe o nome do colaborador.</p>
+    </div>
+    <div class="mt-4 flex justify-end gap-2">
+      <button type="button" id="indicacao-cancelar" class="px-4 py-2 border rounded text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>
+      <button type="button" id="indicacao-confirmar" class="px-4 py-2 rounded text-sm text-white bg-ctgreen hover:bg-ctdark">Salvar</button>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const modal = document.getElementById('indicacao-modal');
+  const input = document.getElementById('indicacao-colaborador-input');
+  const erro = document.getElementById('indicacao-colaborador-erro');
+  const btnCancelar = document.getElementById('indicacao-cancelar');
+  const btnConfirmar = document.getElementById('indicacao-confirmar');
+  let activeForm = null;
+  let activeCheck = null;
+
+  const openModal = (form, check) => {
+    activeForm = form;
+    activeCheck = check;
+    const hidden = form.querySelector('[data-indicacao-nome-hidden]');
+    input.value = hidden && hidden.value ? hidden.value : '';
+    erro.classList.add('hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => input.focus(), 10);
+  };
+
+  const closeModal = (restoreCheck) => {
+    if (restoreCheck && activeCheck) activeCheck.checked = false;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    activeForm = null;
+    activeCheck = null;
+  };
+
+  document.querySelectorAll('[data-indicacao-check]').forEach((check) => {
+    check.addEventListener('change', () => {
+      const form = check.closest('form');
+      if (!form) return;
+      if (!check.checked) {
+        const hidden = form.querySelector('[data-indicacao-nome-hidden]');
+        if (hidden) hidden.value = '';
+        form.submit();
+        return;
+      }
+      openModal(form, check);
+    });
+  });
+
+  btnCancelar.addEventListener('click', () => closeModal(true));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal(true);
+  });
+
+  btnConfirmar.addEventListener('click', () => {
+    if (!activeForm) return;
+    const formRef = activeForm;
+    const nome = (input.value || '').trim();
+    if (!nome) {
+      erro.classList.remove('hidden');
+      input.focus();
+      return;
+    }
+    const hidden = formRef.querySelector('[data-indicacao-nome-hidden]');
+    if (hidden) hidden.value = nome;
+    closeModal(false);
+    formRef.submit();
+  });
+})();
+</script>

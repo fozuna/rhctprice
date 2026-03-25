@@ -61,6 +61,14 @@ try {
     $router->get('/admin/candidaturas/{id}', [AdminCandidaturasController::class, 'show']);
     $router->get('/admin/candidaturas/{id}/download', [AdminCandidaturasController::class, 'download']);
     $router->post('/admin/candidaturas/{id}/atualizar', [AdminCandidaturasController::class, 'update']);
+    $router->post('/admin/candidaturas/{id}/indicacao', [AdminCandidaturasController::class, 'updateIndicacao']);
+    $router->get('/admin/indicacoes', [AdminIndicacoesController::class, 'index']);
+    $router->post('/admin/indicacoes/{id}/pagar', [AdminIndicacoesController::class, 'markPago']);
+    $router->post('/admin/indicacoes/{id}/pagar/editar-data', [AdminIndicacoesController::class, 'updatePaymentDate']);
+    $router->get('/api/indicacoes/{id}/status', [AdminIndicacoesController::class, 'statusApi']);
+    $router->get('/api/financeiro/contas-receber/indicacoes', [AdminIndicacoesController::class, 'contasReceberApi']);
+    $router->get('/api/financeiro/conciliacao/indicacoes', [AdminIndicacoesController::class, 'conciliacaoApi']);
+    $router->get('/api/financeiro/relatorios/indicacoes', [AdminIndicacoesController::class, 'relatoriosFinanceirosApi']);
 
     $router->get('/admin/beneficios', [AdminBeneficiosController::class, 'index']);
     $router->get('/admin/beneficios/novo', [AdminBeneficiosController::class, 'create']);
