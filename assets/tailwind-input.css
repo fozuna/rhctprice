@@ -20,3 +20,108 @@
   .bg-ctpblue { background-color: #00222C; }
   .border-ctgreen { border-color: #10E36B; }
 }
+
+@layer components {
+  .ct-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    border: 1px solid transparent;
+    color: #FFFFFF;
+    background-color: #0F4A5E;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+    cursor: pointer;
+    transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
+  }
+  .ct-btn:hover {
+    background-color: #0A3444;
+  }
+  .ct-btn:focus-visible {
+    outline: 2px solid #F8FAFC;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(15, 74, 94, 0.35);
+  }
+  .ct-btn:disabled,
+  .ct-btn[disabled] {
+    color: #FFFFFF;
+    background-color: #475569;
+    border-color: #334155;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: .7;
+  }
+  .ct-btn-primary {
+    background-color: #0F4A5E;
+    border-color: #0A3444;
+  }
+  .ct-btn-primary:hover {
+    background-color: #0A3444;
+    border-color: #082A36;
+  }
+  .ct-btn-success {
+    background-color: #166534;
+    border-color: #14532D;
+  }
+  .ct-btn-success:hover {
+    background-color: #14532D;
+    border-color: #052E16;
+  }
+  .ct-btn-warning {
+    background-color: #B45309;
+    border-color: #92400E;
+  }
+  .ct-btn-warning:hover {
+    background-color: #92400E;
+    border-color: #7C2D12;
+  }
+  .ct-btn-muted {
+    color: #1E293B;
+    background-color: #FFFFFF;
+    border-color: #94A3B8;
+    box-shadow: none;
+  }
+  .ct-btn-muted:hover {
+    background-color: #F8FAFC;
+    border-color: #64748B;
+  }
+  .ct-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+  .ct-badge-active {
+    background-color: #166534;
+  }
+  .ct-badge-inactive {
+    background-color: #B91C1C;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ct-btn {
+      color: #FFFFFF;
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.25), 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+    .ct-btn:focus-visible {
+      outline-color: #E2E8F0;
+      box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.35);
+    }
+    .ct-btn-muted {
+      color: #E2E8F0;
+      background-color: #1E293B;
+      border-color: #64748B;
+    }
+    .ct-btn-muted:hover {
+      background-color: #334155;
+      border-color: #94A3B8;
+    }
+  }
+}

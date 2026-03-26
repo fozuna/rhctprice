@@ -3,10 +3,16 @@ $queryBase = $base . '/admin/indicacoes';
 $q = $filters['q'] ?? '';
 $pagamento = $filters['pagamento'] ?? '';
 $experiencia = $filters['experiencia'] ?? '';
+$dataDe = $filters['data_de'] ?? '';
+$dataAte = $filters['data_ate'] ?? '';
+$indicador = $filters['indicador'] ?? '';
 $params = [];
 if ($q !== '') { $params['q'] = $q; }
 if ($pagamento !== '') { $params['pagamento'] = $pagamento; }
 if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
+if ($dataDe !== '') { $params['data_de'] = $dataDe; }
+if ($dataAte !== '') { $params['data_ate'] = $dataAte; }
+if ($indicador !== '') { $params['indicador'] = $indicador; }
 ?>
 <div class="bg-white shadow rounded p-6">
   <?php if (!empty($flashError)): ?>
@@ -20,10 +26,14 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
     <div class="text-sm text-gray-500">Indicados cadastrados: <?= (int)$total ?></div>
   </div>
 
-  <form class="mt-4 grid md:grid-cols-4 gap-3" method="get" action="<?= $queryBase ?>">
+  <form class="mt-4 grid md:grid-cols-6 gap-3" method="get" action="<?= $queryBase ?>">
     <div class="md:col-span-2">
       <label class="block text-sm font-medium text-gray-700">Busca</label>
       <input type="text" name="q" value="<?= Security::e($q) ?>" placeholder="Nome do candidato ou vaga" class="mt-1 w-full border rounded px-3 py-2 text-sm" />
+    </div>
+    <div class="md:col-span-2">
+      <label class="block text-sm font-medium text-gray-700">Indicador</label>
+      <input type="text" name="indicador" value="<?= Security::e($indicador) ?>" placeholder="Nome do colaborador indicador" class="mt-1 w-full border rounded px-3 py-2 text-sm" />
     </div>
     <div>
       <label class="block text-sm font-medium text-gray-700">Pagamento</label>
@@ -31,6 +41,8 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
         <option value="">Todos</option>
         <option value="pendente" <?= $pagamento === 'pendente' ? 'selected' : '' ?>>Pendente</option>
         <option value="pago" <?= $pagamento === 'pago' ? 'selected' : '' ?>>Pago</option>
+        <option value="cancelado" <?= $pagamento === 'cancelado' ? 'selected' : '' ?>>Cancelado</option>
+        <option value="em processo" <?= $pagamento === 'em processo' ? 'selected' : '' ?>>Em processo</option>
       </select>
     </div>
     <div>
@@ -42,9 +54,18 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
         <option value="nao_contratado" <?= $experiencia === 'nao_contratado' ? 'selected' : '' ?>>Não contratado</option>
       </select>
     </div>
-    <div class="md:col-span-4 flex gap-2">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">De</label>
+      <input type="date" name="data_de" value="<?= Security::e($dataDe) ?>" class="mt-1 w-full border rounded px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Até</label>
+      <input type="date" name="data_ate" value="<?= Security::e($dataAte) ?>" class="mt-1 w-full border rounded px-3 py-2 text-sm" />
+    </div>
+    <div class="md:col-span-6 flex gap-2 flex-wrap">
       <button class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark text-sm">Filtrar</button>
       <a href="<?= $queryBase ?>" class="px-4 py-2 rounded border text-sm text-gray-600 hover:bg-gray-50">Limpar</a>
+      <a href="<?= $queryBase . '/export?' . http_build_query(array_merge($params, ['format' => 'excel'])) ?>" class="px-4 py-2 rounded border text-sm text-indigo-700 border-indigo-200 hover:bg-indigo-50">Exportar Excel</a>
     </div>
   </form>
 
@@ -98,6 +119,7 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
               <form action="<?= $base ?>/admin/indicacoes/<?= (int)$item['id'] ?>/pagar" method="post" class="inline ml-2" data-pagamento-form="<?= (int)$item['id'] ?>">
                 <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
                 <input type="hidden" name="payment_date" value="" data-payment-date-hidden="<?= (int)$item['id'] ?>">
+                <input type="hidden" name="payment_method" value="" data-payment-method-hidden="<?= (int)$item['id'] ?>">
                 <button type="button" class="text-ctgreen hover:text-ctdark font-medium" data-pagamento-open="<?= (int)$item['id'] ?>">Marcar pago</button>
               </form>
             <?php else: ?>
@@ -148,6 +170,7 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
             <form action="<?= $base ?>/admin/indicacoes/<?= (int)$item['id'] ?>/pagar" method="post" data-pagamento-form="<?= (int)$item['id'] ?>">
               <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
               <input type="hidden" name="payment_date" value="" data-payment-date-hidden="<?= (int)$item['id'] ?>">
+              <input type="hidden" name="payment_method" value="" data-payment-method-hidden="<?= (int)$item['id'] ?>">
               <button type="button" class="text-ctgreen hover:text-ctdark font-medium" data-pagamento-open="<?= (int)$item['id'] ?>">Marcar pago</button>
             </form>
           <?php else: ?>
@@ -210,6 +233,18 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
       <input id="payment-date-input" type="text" inputmode="numeric" maxlength="10" class="ind-modal-input" placeholder="DD/MM/AAAA">
       <p id="payment-date-error" class="text-red-700 text-xs mt-1 hidden" aria-live="polite"></p>
     </div>
+    <div class="ind-modal-field">
+      <label class="block text-sm font-medium text-gray-700" for="payment-method-input">Método de pagamento</label>
+      <select id="payment-method-input" class="ind-modal-input">
+        <option value="">Selecione</option>
+        <option value="PIX">PIX</option>
+        <option value="Transferência">Transferência</option>
+        <option value="TED">TED</option>
+        <option value="DOC">DOC</option>
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </div>
     <div class="ind-modal-actions">
       <button type="button" id="payment-cancel" class="ind-modal-btn ind-modal-btn-secondary">Cancelar</button>
       <button type="button" id="payment-confirm" class="ind-modal-btn ind-modal-btn-primary-green">Confirmar</button>
@@ -242,6 +277,7 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
   const error = document.getElementById('payment-date-error');
   const btnCancel = document.getElementById('payment-cancel');
   const btnConfirm = document.getElementById('payment-confirm');
+  const paymentMethodInput = document.getElementById('payment-method-input');
   const editModal = document.getElementById('pagamento-edit-modal');
   const editDateInput = document.getElementById('payment-edit-date-input');
   const editReasonInput = document.getElementById('payment-edit-reason-input');
@@ -274,6 +310,7 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
     activeForm = form;
     lastFocusElement = document.activeElement;
     input.value = '';
+    paymentMethodInput.value = '';
     error.classList.add('hidden');
     modal.classList.remove('hidden');
     modal.classList.add('is-open');
@@ -367,8 +404,17 @@ if ($experiencia !== '') { $params['experiencia'] = $experiencia; }
       return;
     }
     const target = formRef.querySelector('[data-payment-date-hidden]');
-    if (!target) return;
+    const methodTarget = formRef.querySelector('[data-payment-method-hidden]');
+    const methodValue = (paymentMethodInput.value || '').trim();
+    if (!target || !methodTarget) return;
+    if (!methodValue) {
+      error.textContent = 'Informe o método de pagamento.';
+      error.classList.remove('hidden');
+      paymentMethodInput.focus();
+      return;
+    }
     target.value = value;
+    methodTarget.value = methodValue;
     close();
     formRef.submit();
   });

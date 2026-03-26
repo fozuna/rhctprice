@@ -22,7 +22,7 @@ $isActive = !empty($user->email_verified_at);
     </div>
     <div>
       <div class="text-gray-500">Status</div>
-      <span class="inline-flex mt-1 px-2 py-1 rounded text-xs font-semibold text-white <?= $isActive ? 'bg-ctgreen' : 'bg-red-500' ?>">
+      <span class="ct-badge mt-1 <?= $isActive ? 'ct-badge-active' : 'ct-badge-inactive' ?>">
         <?= $isActive ? 'Ativo' : 'Inativo' ?>
       </span>
     </div>
@@ -36,13 +36,96 @@ $isActive = !empty($user->email_verified_at);
     </div>
   </div>
 
-  <div class="mt-6 flex gap-2">
+  <div class="mt-6 flex flex-wrap gap-4">
     <form action="<?= $base ?>/admin/usuarios/<?= (int)$user->id ?>/status" method="post">
       <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
       <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
-      <button class="px-4 py-2 rounded text-white <?= $isActive ? 'bg-orange-600 hover:bg-orange-700' : 'bg-ctgreen hover:bg-ctdark' ?>">
+      <button class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark text-sm">
         <?= $isActive ? 'Desativar usuário' : 'Ativar usuário' ?>
       </button>
     </form>
+    <button type="button" id="open-password-modal" class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark text-sm">
+      Alterar Senha
+    </button>
   </div>
 </div>
+<div id="password-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+  <div class="w-full max-w-md bg-white rounded shadow p-6">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-ctpblue">Alterar senha do usuário</h3>
+      <button type="button" id="close-password-modal" class="px-4 py-2 rounded border text-sm text-gray-600 hover:bg-gray-50">Fechar</button>
+    </div>
+    <form id="password-change-form" class="mt-4 space-y-3">
+      <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Nova senha</label>
+        <input type="password" name="new_password" required minlength="12" class="mt-1 w-full border rounded px-3 py-2 text-sm" placeholder="Digite a nova senha">
+      </div>
+      <div class="text-sm text-gray-500">Tem certeza que deseja alterar a senha deste usuário?</div>
+      <div class="flex flex-wrap items-center justify-end gap-4 pt-2">
+        <button type="button" id="cancel-password-modal" class="px-4 py-2 rounded border text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>
+        <button type="submit" class="bg-ctgreen text-white px-4 py-2 rounded hover:bg-ctdark text-sm">Confirmar alteração</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+var openPasswordModalButton = document.getElementById('open-password-modal');
+var closePasswordModalButton = document.getElementById('close-password-modal');
+var cancelPasswordModalButton = document.getElementById('cancel-password-modal');
+var passwordModal = document.getElementById('password-modal');
+var passwordChangeForm = document.getElementById('password-change-form');
+
+function openPasswordModal() {
+  passwordModal.classList.remove('hidden');
+  passwordModal.classList.add('flex');
+}
+
+function closePasswordModal() {
+  passwordModal.classList.remove('flex');
+  passwordModal.classList.add('hidden');
+}
+
+openPasswordModalButton.addEventListener('click', openPasswordModal);
+closePasswordModalButton.addEventListener('click', closePasswordModal);
+cancelPasswordModalButton.addEventListener('click', closePasswordModal);
+
+passwordModal.addEventListener('click', function (event) {
+  if (event.target === passwordModal) {
+    closePasswordModal();
+  }
+});
+
+passwordChangeForm.addEventListener('submit', async function (event) {
+  event.preventDefault();
+  var newPasswordInput = passwordChangeForm.querySelector('input[name="new_password"]');
+  var csrfInput = passwordChangeForm.querySelector('input[name="csrf"]');
+  var newPassword = newPasswordInput.value;
+  var csrf = csrfInput.value;
+  if (!newPassword) {
+    alert('Informe a nova senha.');
+    return;
+  }
+  if (!window.confirm('Tem certeza que deseja alterar a senha deste usuário?')) {
+    return;
+  }
+  try {
+    var response = await fetch('<?= $base ?>/api/admin/usuarios/<?= (int)$user->id ?>/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ csrf: csrf, new_password: newPassword })
+    });
+    var data = await response.json();
+    if (!response.ok || !data.ok) {
+      alert(data.error || 'Não foi possível alterar a senha.');
+      return;
+    }
+    newPasswordInput.value = '';
+    closePasswordModal();
+    alert(data.message || 'Senha alterada com sucesso.');
+  } catch (error) {
+    alert('Erro de comunicação com o servidor.');
+  }
+});
+</script>

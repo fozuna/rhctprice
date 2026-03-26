@@ -169,4 +169,51 @@ class AdminUsuariosController extends Controller
         User::setActiveStatus((int)$id, $active);
         redirect('/admin/usuarios');
     }
+
+    public function adminChangePasswordApi(string $id): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'Método não permitido.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        if (!Auth::check()) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Não autenticado.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        $actor = User::findById((int)($_SESSION['user_id'] ?? 0));
+        if (!$actor) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Usuário autenticado não encontrado.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        $actorIsAdmin = strtolower(trim((string)($actor->role ?? ''))) === 'admin' || (int)($actor->is_supervisor ?? 0) === 1;
+        if (!$actorIsAdmin) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'Apenas administradores podem executar esta ação.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        $raw = file_get_contents('php://input');
+        $payload = json_decode($raw ?: '', true);
+        if (!is_array($payload)) {
+            $payload = $_POST;
+        }
+        $csrf = (string)($payload['csrf'] ?? '');
+        if (!Security::csrfCheck($csrf)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Falha na verificação de segurança (CSRF).'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        $newPassword = (string)($payload['new_password'] ?? '');
+        $result = User::adminChangePassword((int)$id, $newPassword, $actor, Security::clientIp());
+        $status = (int)($result['status'] ?? 500);
+        http_response_code($status);
+        if (!($result['ok'] ?? false)) {
+            echo json_encode(['ok' => false, 'error' => (string)($result['error'] ?? 'Falha ao alterar senha.')], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        echo json_encode(['ok' => true, 'message' => 'Senha alterada com sucesso.'], JSON_UNESCAPED_UNICODE);
+    }
 }

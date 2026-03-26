@@ -39,7 +39,10 @@ CREATE TABLE IF NOT EXISTS candidaturas (
   indicacao_data_contratacao DATETIME DEFAULT NULL,
   indicacao_data_fim_experiencia DATE DEFAULT NULL,
   indicacao_pagamento_realizado TINYINT(1) NOT NULL DEFAULT 0,
+  indicacao_pagamento_status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+  indicacao_valor_comissao DECIMAL(10,2) DEFAULT NULL,
   indicacao_data_pagamento DATE DEFAULT NULL,
+  indicacao_metodo_pagamento VARCHAR(50) DEFAULT NULL,
   indicacao_pagamento_registrado_em DATETIME DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_cand_vaga FOREIGN KEY (vaga_id) REFERENCES vagas(id) ON DELETE CASCADE

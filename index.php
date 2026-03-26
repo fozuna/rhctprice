@@ -30,6 +30,7 @@ try {
 
     $router->post('/api/check-cpf', [ApiController::class, 'checkCpf']);
     $router->post('/api/pipeline/move', [AdminPipelineController::class, 'move']);
+    $router->post('/api/admin/usuarios/{id}/password', [AdminUsuariosController::class, 'adminChangePasswordApi']);
 
     $router->get('/login', [AuthController::class, 'login']);
     $router->post('/login', [AuthController::class, 'doLogin']);
@@ -63,6 +64,7 @@ try {
     $router->post('/admin/candidaturas/{id}/atualizar', [AdminCandidaturasController::class, 'update']);
     $router->post('/admin/candidaturas/{id}/indicacao', [AdminCandidaturasController::class, 'updateIndicacao']);
     $router->get('/admin/indicacoes', [AdminIndicacoesController::class, 'index']);
+    $router->get('/admin/indicacoes/export', [AdminIndicacoesController::class, 'export']);
     $router->post('/admin/indicacoes/{id}/pagar', [AdminIndicacoesController::class, 'markPago']);
     $router->post('/admin/indicacoes/{id}/pagar/editar-data', [AdminIndicacoesController::class, 'updatePaymentDate']);
     $router->get('/api/indicacoes/{id}/status', [AdminIndicacoesController::class, 'statusApi']);

@@ -44,15 +44,15 @@ if ($status !== '') { $params['status'] = $status; }
 
   <div class="mt-5 text-sm text-gray-500">Total de usuários: <?= (int)$total ?></div>
 
-  <div class="mt-4 overflow-x-auto hidden md:block">
+  <div class="mt-4 overflow-x-auto">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50">
       <tr class="border-b">
         <th class="text-left p-3 font-medium text-gray-500">Nome</th>
         <th class="text-left p-3 font-medium text-gray-500">E-mail</th>
-        <th class="text-left p-3 font-medium text-gray-500">Cadastro</th>
-        <th class="text-left p-3 font-medium text-gray-500">Status</th>
         <th class="text-left p-3 font-medium text-gray-500">Permissão</th>
+        <th class="text-left p-3 font-medium text-gray-500">Status</th>
+        <th class="text-left p-3 font-medium text-gray-500">Data de cadastro</th>
         <th class="text-left p-3 font-medium text-gray-500">Ações</th>
       </tr>
       </thead>
@@ -62,30 +62,15 @@ if ($status !== '') { $params['status'] = $status; }
         <tr class="hover:bg-gray-50">
           <td class="p-3 font-medium text-gray-900"><?= Security::e($u['nome']) ?></td>
           <td class="p-3 text-gray-700"><?= Security::e($u['email']) ?></td>
-          <td class="p-3 text-gray-500"><?= !empty($u['created_at']) ? date('d/m/Y H:i', strtotime((string)$u['created_at'])) : '-' ?></td>
+          <td class="p-3 text-gray-700"><?= Security::e(strtoupper((string)($u['role'] ?? ''))) ?></td>
           <td class="p-3">
-            <span class="px-2 py-1 rounded text-xs font-semibold text-white <?= $isActive ? 'bg-ctgreen' : 'bg-red-500' ?>">
+            <span class="ct-badge <?= $isActive ? 'ct-badge-active' : 'ct-badge-inactive' ?>">
               <?= $isActive ? 'Ativo' : 'Inativo' ?>
             </span>
           </td>
-          <td class="p-3">
-            <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/role" method="post" class="flex items-center gap-2">
-              <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
-              <select name="role" class="border rounded px-2 py-1 text-sm">
-                <option value="viewer" <?= ($u['role'] ?? '') === 'viewer' ? 'selected' : '' ?>>Leitor</option>
-                <option value="rh" <?= ($u['role'] ?? '') === 'rh' ? 'selected' : '' ?>>RH</option>
-                <option value="admin" <?= ($u['role'] ?? '') === 'admin' ? 'selected' : '' ?>>Admin</option>
-              </select>
-              <button class="text-ctpblue hover:text-ctgreen text-xs font-semibold">Salvar</button>
-            </form>
-          </td>
-          <td class="p-3 space-x-2 whitespace-nowrap">
+          <td class="p-3 text-gray-500"><?= !empty($u['created_at']) ? date('d/m/Y H:i', strtotime((string)$u['created_at'])) : '-' ?></td>
+          <td class="p-3 whitespace-nowrap">
             <a href="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>" class="text-blue-600 hover:text-blue-900 font-medium">Visualizar</a>
-            <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/status" method="post" class="inline">
-              <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
-              <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
-              <button class="text-orange-600 hover:text-orange-800 font-medium"><?= $isActive ? 'Desativar' : 'Ativar' ?></button>
-            </form>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -96,30 +81,6 @@ if ($status !== '') { $params['status'] = $status; }
       <?php endif; ?>
       </tbody>
     </table>
-  </div>
-
-  <div class="mt-4 grid gap-3 md:hidden">
-    <?php foreach ($users as $u): ?>
-      <?php $isActive = (int)($u['ativo'] ?? 0) === 1; ?>
-      <div class="border rounded p-4 bg-gray-50">
-        <div class="font-semibold text-ctpblue"><?= Security::e($u['nome']) ?></div>
-        <div class="text-sm text-gray-600"><?= Security::e($u['email']) ?></div>
-        <div class="mt-2 text-xs text-gray-500">Cadastro: <?= !empty($u['created_at']) ? date('d/m/Y H:i', strtotime((string)$u['created_at'])) : '-' ?></div>
-        <div class="mt-2">
-          <span class="px-2 py-1 rounded text-xs font-semibold text-white <?= $isActive ? 'bg-ctgreen' : 'bg-red-500' ?>">
-            <?= $isActive ? 'Ativo' : 'Inativo' ?>
-          </span>
-        </div>
-        <div class="mt-3 flex gap-3 text-sm">
-          <a href="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>" class="text-blue-600 hover:text-blue-900 font-medium">Visualizar</a>
-          <form action="<?= $base ?>/admin/usuarios/<?= (int)$u['id'] ?>/status" method="post">
-            <input type="hidden" name="csrf" value="<?= Security::e($csrf) ?>">
-            <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
-            <button class="text-orange-600 hover:text-orange-800 font-medium"><?= $isActive ? 'Desativar' : 'Ativar' ?></button>
-          </form>
-        </div>
-      </div>
-    <?php endforeach; ?>
   </div>
 
   <?php if (($pages ?? 1) > 1): ?>

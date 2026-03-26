@@ -130,6 +130,42 @@ class User
         return $stmt->execute([$passwordHash, $id]);
     }
 
+    public static function adminChangePassword(int $targetId, string $newPassword, ?self $actor, ?string $ip): array
+    {
+        if (!$actor) {
+            return ['ok' => false, 'status' => 401, 'error' => 'Usuário autenticado não encontrado.'];
+        }
+        $actorIsAdmin = strtolower(trim((string)($actor->role ?? ''))) === 'admin' || (int)($actor->is_supervisor ?? 0) === 1;
+        if (!$actorIsAdmin) {
+            return ['ok' => false, 'status' => 403, 'error' => 'Apenas administradores podem alterar senhas de outros usuários.'];
+        }
+        $target = self::findById($targetId);
+        if (!$target) {
+            return ['ok' => false, 'status' => 404, 'error' => 'Usuário alvo não encontrado.'];
+        }
+        if ($actor->id === $target->id) {
+            return ['ok' => false, 'status' => 400, 'error' => 'Use a recuperação de senha para alterar a sua própria senha.'];
+        }
+        $policy = PasswordPolicy::validate($newPassword);
+        if (!($policy['valid'] ?? false)) {
+            return ['ok' => false, 'status' => 422, 'error' => implode(' ', $policy['errors'] ?? [])];
+        }
+        $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+        $updated = self::updatePassword($target->id, $passwordHash);
+        if (!$updated) {
+            return ['ok' => false, 'status' => 500, 'error' => 'Falha ao atualizar senha.'];
+        }
+        AuditLog::log($actor->id, $target->id, 'admin_password_change', 'Alteração administrativa de senha', $ip);
+        Logger::info('Senha de usuário alterada por administrador', [
+            'admin_user_id' => $actor->id,
+            'target_user_id' => $target->id,
+            'target_user_email' => $target->email,
+            'ip' => (string)$ip
+        ]);
+        Mailer::notifyUserPasswordChanged($target->email, $target->nome, $actor->id);
+        return ['ok' => true, 'status' => 200];
+    }
+
     public static function setActiveStatus(int $id, bool $active): bool
     {
         if ($active) {

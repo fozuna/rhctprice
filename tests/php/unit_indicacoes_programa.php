@@ -75,8 +75,18 @@ if ((int)($list['total'] ?? 0) < 1) {
     fwrite(STDERR, "Falha: página de indicações não listou candidato indicado.\n");
     exit(1);
 }
+$reportRows = Candidatura::reportIndicacoes(['q' => $suffix, 'pagamento' => 'pendente', 'indicador' => 'Colaborador']);
+if (count($reportRows) < 1) {
+    fwrite(STDERR, "Falha: dataset de relatório não retornou dados filtrados.\n");
+    exit(1);
+}
+$totals = Candidatura::reportTotals($reportRows);
+if ((int)($totals['total'] ?? 0) < 1) {
+    fwrite(STDERR, "Falha: totais de relatório inválidos.\n");
+    exit(1);
+}
 
-$pagoRes = Candidatura::markIndicacaoPagamento($candId, date('d/m/Y'));
+$pagoRes = Candidatura::markIndicacaoPagamento($candId, date('d/m/Y'), 1, 'PIX');
 if (!($pagoRes['ok'] ?? false)) {
     fwrite(STDERR, "Falha: pagamento da indicação não foi aceito.\n");
     exit(1);
@@ -84,6 +94,10 @@ if (!($pagoRes['ok'] ?? false)) {
 $candPago = Candidatura::find($candId);
 if ((int)($candPago['indicacao_pagamento_realizado'] ?? 0) !== 1 || empty($candPago['indicacao_data_pagamento'])) {
     fwrite(STDERR, "Falha: pagamento da indicação não foi marcado corretamente.\n");
+    exit(1);
+}
+if (trim((string)($candPago['indicacao_metodo_pagamento'] ?? '')) !== 'PIX') {
+    fwrite(STDERR, "Falha: método de pagamento não foi persistido.\n");
     exit(1);
 }
 
